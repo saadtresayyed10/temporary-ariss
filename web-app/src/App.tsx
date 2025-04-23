@@ -1,0 +1,68 @@
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import Dashboard from './pages/Dashboard';
+import Category from './pages/Category/Index';
+import AdminLayout from './layouts/MainLayout';
+import { ThemeProvider } from './components/theme-provider';
+import AddCategory from './pages/Category/AddCategory';
+import { Toaster } from './components/ui/toaster';
+import CategoryDetails from './pages/Category/CategoryDetails';
+import Subcategory from './pages/SubCategory/Index';
+import AddSubcategory from './pages/SubCategory/AddSubCategory';
+import SubcategoryDetails from './pages/SubCategory/SubcategoryDetails';
+import Customer from './pages/Customer/Index';
+import ApprovedDealers from './pages/Customer/ApprovedDealers/Index';
+import NotApprovedDealers from './pages/Customer/NotApprovedDealers/Index';
+import Technicians from './pages/Technician/Index';
+import BackOffices from './pages/Back-Office/Index';
+import Distributors from './pages/Distributor/Index';
+import Product from './pages/Product/Index';
+import AddProduct from './pages/Product/AddProduct';
+import AddDiscount from './pages/Discount/AddDiscount';
+import Discounts from './pages/Discount/Index';
+import RMA from './pages/RMA/Index';
+import FetchSingleRMA from './pages/RMA/FetchSingleRMA';
+
+function App() {
+    return (
+        <ThemeProvider>
+            <BrowserRouter>
+                <Routes>
+                    <Route path="/" element={<AdminLayout />}>
+                        <Route index element={<Dashboard />} />
+
+                        <Route path="products" element={<Product />} />
+                        <Route path="products/add" element={<AddProduct />} />
+
+                        <Route path="categories" element={<Category />} />
+                        <Route path="categories/add" element={<AddCategory />} />
+                        <Route path="categories/:category_id" element={<CategoryDetails />} />
+
+                        <Route path="subcategories" element={<Subcategory />} />
+                        <Route path="subcategories/add" element={<AddSubcategory />} />
+                        <Route path="subcategories/:subcategory_id" element={<SubcategoryDetails />} />
+
+                        <Route path="customers" element={<Customer />} />
+
+                        <Route path="customers/dealers/approved" element={<ApprovedDealers />} />
+                        <Route path="customers/dealers/not-approved" element={<NotApprovedDealers />} />
+
+                        <Route path="customers/technicians" element={<Technicians />} />
+
+                        <Route path="customers/backoffices" element={<BackOffices />} />
+
+                        <Route path="customers/distributors" element={<Distributors />} />
+
+                        <Route path="discounts" element={<Discounts />} />
+                        <Route path="discounts/add" element={<AddDiscount />} />
+
+                        <Route path="rma" element={<RMA />} />
+                        <Route path="rma/:rma_id" element={<FetchSingleRMA />} />
+                    </Route>
+                </Routes>
+                <Toaster />
+            </BrowserRouter>
+        </ThemeProvider>
+    );
+}
+
+export default App;
