@@ -6,12 +6,12 @@ import {
     Landmark,
     LayoutDashboard,
     Network,
+    Package2,
     ShoppingCart,
     TicketPercent,
     Users,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import SidebarProduct from './Sidebar/ProductSidebar';
 import SidebarCourse from './Sidebar/Course';
 
 interface SidebarProps {
@@ -54,8 +54,14 @@ const Sidebar = ({ isOpen }: SidebarProps) => {
                     <span />
                 </Link>
             </button>
-            <button className="w-full">
-                <SidebarProduct />
+            <button className="bg-transparent text-stone-800 dark:text-stone-100 hover:bg-transparent w-full shadow-none flex justify-between items-center lg:px-1.5 lg:py-2 text-base font-normal">
+                <Link to="/products">
+                    <span className="flex items-center gap-x-2 text-lg font-work">
+                        <Package2 size={20} className="min-w-[20px] min-h-[20px] stroke-[1.5] mr-2" />
+                        Products
+                    </span>
+                    <span />
+                </Link>
             </button>
             <button className="bg-transparent text-stone-800 dark:text-stone-100 hover:bg-transparent w-full shadow-none flex justify-between items-center lg:px-1.5 lg:py-2 text-base font-normal">
                 <Link to="/discounts">

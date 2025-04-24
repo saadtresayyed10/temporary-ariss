@@ -33,3 +33,7 @@ export const getAllSubcategoriesForProduct = async () => {
 export const deleteProduct = async (product_id: string) => {
     return await axios.delete(`${apiURL}/products/${product_id}`);
 };
+
+export const getSingleProduct = async (product_id: string) => {
+    return axios.get(`${apiURL}/products/${product_id}`);
+};

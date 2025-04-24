@@ -74,10 +74,6 @@ export const getAllProductsService = async () => {
         },
     });
 
-    if (!products || products.length === 0) {
-        throw new Error('Products are empty');
-    }
-
     return products;
 };
 

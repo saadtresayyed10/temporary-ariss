@@ -23,6 +23,7 @@ import RMA from './pages/RMA/Index';
 import FetchSingleRMA from './pages/RMA/FetchSingleRMA';
 import SingleDealer from './pages/Customer/FetchSingleDealer';
 import ProfilePic from './_components/ProfilePic';
+import FetchSingleProduct from './pages/Product/FetchSingleProduct';
 
 function App() {
     return (
@@ -34,6 +35,7 @@ function App() {
 
                         <Route path="products" element={<Product />} />
                         <Route path="products/add" element={<AddProduct />} />
+                        <Route path="products/:product_id" element={<FetchSingleProduct />} />
 
                         <Route path="categories" element={<Category />} />
                         <Route path="categories/add" element={<AddCategory />} />

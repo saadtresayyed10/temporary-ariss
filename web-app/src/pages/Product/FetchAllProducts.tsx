@@ -20,10 +20,10 @@ import { Button } from '../../components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
 import { Input } from '../../components/ui/input';
 import { Badge } from '../../components/ui/badge';
-import { ChevronDown, Eye, Trash, MoreHorizontal, Pencil } from 'lucide-react';
+import { ChevronDown, Eye, Trash, MoreHorizontal, Loader2, PlusCircle } from 'lucide-react';
 import { Dialog, DialogContent } from '../../components/ui/dialog';
 import { toast } from '../../hooks/use-toast';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 interface Product {
     product_id: string;
@@ -56,12 +56,28 @@ const FetchAllProducts = () => {
     const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
     const [deleteConfirm, setDeleteConfirm] = useState('');
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
 
-    useEffect(() => {
-        const fetchData = async () => {
+    const fetchData = async () => {
+        setLoading(true);
+        try {
             const res = await getAllProducts();
             setData(res.data.data);
-        };
+        } catch (error) {
+            console.error(error);
+            toast({
+                variant: 'destructive',
+                title: 'Failed to fetch products',
+                description: 'Check logs or try again later...',
+                className: 'font-work border shadow rounded',
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
         fetchData();
     }, []);
 
@@ -70,6 +86,7 @@ const FetchAllProducts = () => {
             await deleteProduct(selectedProductId);
             toast({ title: 'Product deleted successfully', className: 'rounded shadow-md font-work' });
             setData((prev) => prev.filter((p) => p.product_id !== selectedProductId));
+            fetchData();
             setSelectedProductId(null);
             setDeleteConfirm('');
             setDeleteDialogOpen(false);
@@ -147,13 +164,12 @@ const FetchAllProducts = () => {
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="rounded font-work">
-                            <DropdownMenuItem className="flex justify-between items-center cursor-pointer">
-                                <Link to={`/products/${product.product_id}`}>View</Link>
+                            <DropdownMenuItem
+                                onClick={() => navigate(`/products/${product.product_id}`)}
+                                className="flex justify-between items-center cursor-pointer"
+                            >
+                                <h6>View & Edit</h6>
                                 <Eye className="ml-2 h-4 w-4" />
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="flex justify-between items-center cursor-pointer">
-                                <Link to={`/products/${product.product_id}`}>Edit</Link>
-                                <Pencil className="ml-2 h-4 w-4" />
                             </DropdownMenuItem>
                             <DropdownMenuItem
                                 onClick={() => {
@@ -187,18 +203,48 @@ const FetchAllProducts = () => {
     return (
         <div className="space-y-4 p-6 font-work rounded">
             <div className="flex items-center justify-between">
-                <Input
-                    placeholder="Search products..."
-                    value={globalFilter}
-                    onChange={(e) => setGlobalFilter(e.target.value)}
-                    className="w-[250px] rounded"
-                />
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="rounded flex items-center gap-2">
-                            Filter <ChevronDown size={16} />
+                <div className="flex justify-start items-center flex-col gap-y-4">
+                    <Input
+                        placeholder="Search products..."
+                        value={globalFilter}
+                        onChange={(e) => setGlobalFilter(e.target.value)}
+                        className="w-[250px] rounded"
+                    />
+                    <div className="flex justify-start items-center gap-x-6 w-full">
+                        <Button
+                            onClick={() => navigate('/categories')}
+                            size="sm"
+                            className="rounded"
+                            variant="outline"
+                        >
+                            Categories
                         </Button>
-                    </DropdownMenuTrigger>
+                        <Button
+                            onClick={() => navigate('/subcategories')}
+                            size="sm"
+                            className="rounded"
+                            variant="outline"
+                        >
+                            Subcategories
+                        </Button>
+                    </div>
+                </div>
+                <DropdownMenu>
+                    <div className="flex justify-center items-center gap-x-4">
+                        <Button
+                            variant="default"
+                            className="rounded"
+                            onClick={() => navigate('/products/add')}
+                        >
+                            Add Products <PlusCircle className="ml-2 h-4 w-4" />
+                        </Button>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" className="ml-auto rounded font-work">
+                                Filter
+                                <ChevronDown className="mr-2 h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                    </div>
                     <DropdownMenuContent align="end" className="w-[200px] rounded font-work">
                         {table
                             .getAllColumns()
@@ -239,7 +285,11 @@ const FetchAllProducts = () => {
                     <TableBody>
                         {table.getRowModel().rows.length ? (
                             table.getRowModel().rows.map((row) => (
-                                <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
+                                <TableRow
+                                    className="odd:bg-gray-100 even:bg-white dark:even:bg-stone-500/20 dark:odd:bg-stone-800"
+                                    key={row.id}
+                                    data-state={row.getIsSelected() && 'selected'}
+                                >
                                     {row.getVisibleCells().map((cell) => (
                                         <TableCell key={cell.id} className="px-4 py-2 whitespace-nowrap">
                                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -249,8 +299,14 @@ const FetchAllProducts = () => {
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={columns.length} className="text-center h-24">
-                                    No products found.
+                                <TableCell colSpan={columns.length}>
+                                    <div className="flex justify-center items-center w-full h-24">
+                                        {loading ? (
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                            <span className="text-center">No Products Found</span>
+                                        )}
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         )}

@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { addProduct, getAllSubcategoriesForProduct } from '../../api/productAPI';
 import { getCategoryNames } from '../../api/subCategoryAPI';
 import MDEditor from '@uiw/react-md-editor';
+import axios from 'axios';
 
 type InputFieldProps<T extends string | number> = {
     label: string;
@@ -161,6 +162,40 @@ const AddProduct = () => {
             toast({ variant: 'destructive', description: 'Something went wrong while adding the product.' });
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const files = event.target.files;
+        if (!files || files.length === 0) return;
+
+        const uploadedURLs: string[] = [];
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
+
+            try {
+                const response = await axios.post(
+                    `https://api.cloudinary.com/v1_1/${
+                        import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
+                    }/image/upload`,
+                    formData
+                );
+                uploadedURLs.push(response.data.secure_url);
+            } catch (error) {
+                console.error(error);
+                toast({
+                    variant: 'destructive',
+                    description: `Failed to upload image: ${file.name}`,
+                });
+            }
+        }
+
+        if (uploadedURLs.length) {
+            setPastedImageURLs((prev) => [...prev, ...uploadedURLs]);
+            toast({ description: 'Image(s) uploaded successfully.' });
         }
     };
 
@@ -345,6 +380,18 @@ const AddProduct = () => {
                                 <span className="break-words underline">{url}</span>
                             </div>
                         ))}
+                    </div>
+
+                    {/* File Upload */}
+                    <div className="mt-4">
+                        <Label className="mb-2 block">Upload Image(s)</Label>
+                        <Input
+                            type="file"
+                            multiple
+                            accept="image/*"
+                            onChange={handleFileUpload}
+                            className="w-fit cursor-pointer"
+                        />
                     </div>
                 </div>
 
