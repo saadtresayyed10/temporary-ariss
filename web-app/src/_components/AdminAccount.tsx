@@ -1,3 +1,4 @@
+import { useAdminAuthStore } from '../store/useAdminAuthStore';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import {
     DropdownMenu,
@@ -13,8 +14,23 @@ import {
     DropdownMenuSubTrigger,
     DropdownMenuTrigger,
 } from '../components/ui/dropdown-menu';
+import { useNavigate } from 'react-router-dom';
+import { adminLogout } from '../api/authURL';
 
 export default function AdminAccount() {
+    const logoutAdmin = useAdminAuthStore((state) => state.logoutAdmin);
+    const navigate = useNavigate();
+
+    const handleLogout = async () => {
+        try {
+            await adminLogout(); // this will hit your backend and clear the cookie
+        } catch (err) {
+            console.error('Logout API failed:', err);
+        } finally {
+            logoutAdmin(); // clears the state from zustand
+            navigate('/admin/login'); // redirect to login page
+        }
+    };
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -68,7 +84,7 @@ export default function AdminAccount() {
                 <DropdownMenuItem className="cursor-pointer">Support</DropdownMenuItem>
                 <DropdownMenuItem disabled>API</DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="cursor-pointer">
+                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
                     Log out
                     <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
                 </DropdownMenuItem>

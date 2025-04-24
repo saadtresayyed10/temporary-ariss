@@ -27,13 +27,22 @@ import FetchSingleProduct from './pages/Product/FetchSingleProduct';
 import Courses from './pages/Courses/Index';
 import AddCourse from './pages/Courses/AddCouse';
 import FetchSingleCourse from './pages/Courses/FetchSingleCourse';
+import ProtectRoutes from './middleware/ProtectRoutes';
+import Login from './pages/Admin/Login';
 
 function App() {
     return (
         <ThemeProvider>
             <BrowserRouter>
                 <Routes>
-                    <Route path="/" element={<AdminLayout />}>
+                    <Route
+                        path="/"
+                        element={
+                            <ProtectRoutes>
+                                <AdminLayout />
+                            </ProtectRoutes>
+                        }
+                    >
                         <Route index element={<Dashboard />} />
 
                         <Route path="products" element={<Product />} />
@@ -70,6 +79,11 @@ function App() {
                         <Route path="courses" element={<Courses />} />
                         <Route path="courses/add" element={<AddCourse />} />
                         <Route path="courses/:course_id" element={<FetchSingleCourse />} />
+                    </Route>
+
+                    <Route path="/login" element={<Login />}>
+                        <Route path="login/employee" />
+                        <Route path="register/employee" />
                     </Route>
                 </Routes>
                 <Toaster />
