@@ -1,11 +1,17 @@
 // src/components/Sidebar.tsx
 import clsx from 'clsx';
-import { ArrowLeftRight, Heart, Landmark, LayoutDashboard, ShoppingCart } from 'lucide-react';
+import {
+    ArrowLeftRight,
+    Heart,
+    Landmark,
+    LayoutDashboard,
+    Network,
+    ShoppingCart,
+    TicketPercent,
+    Users,
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 import SidebarProduct from './Sidebar/ProductSidebar';
-import SidebarCategory from './Sidebar/CategoriesSidebar';
-import SidebarCustomer from './Sidebar/Customers';
-import SidebarDiscount from './Sidebar/Discount';
 import SidebarCourse from './Sidebar/Course';
 
 interface SidebarProps {
@@ -30,17 +36,35 @@ const Sidebar = ({ isOpen }: SidebarProps) => {
                     <span />
                 </Link>
             </button>
-            <button className="w-full">
-                <SidebarCustomer />
+            <button className="bg-transparent text-stone-800 dark:text-stone-100 hover:bg-transparent w-full shadow-none flex justify-between items-center lg:px-1.5 lg:py-2 text-base font-normal">
+                <Link to="/customers">
+                    <span className="flex items-center gap-x-2 text-lg font-work">
+                        <Users size={20} className="min-w-[20px] min-h-[20px] stroke-[1.5] mr-2" />
+                        Customers
+                    </span>
+                    <span />
+                </Link>
             </button>
-            <button className="w-full">
-                <SidebarCategory />
+            <button className="bg-transparent text-stone-800 dark:text-stone-100 hover:bg-transparent w-full shadow-none flex justify-between items-center lg:px-1.5 lg:py-2 text-base font-normal">
+                <Link to="/categories">
+                    <span className="flex items-center gap-x-2 text-lg font-work">
+                        <Network size={20} className="min-w-[20px] min-h-[20px] stroke-[1.5] mr-2" />
+                        Categories
+                    </span>
+                    <span />
+                </Link>
             </button>
             <button className="w-full">
                 <SidebarProduct />
             </button>
-            <button className="w-full">
-                <SidebarDiscount />
+            <button className="bg-transparent text-stone-800 dark:text-stone-100 hover:bg-transparent w-full shadow-none flex justify-between items-center lg:px-1.5 lg:py-2 text-base font-normal">
+                <Link to="/discounts">
+                    <span className="flex items-center gap-x-2 text-lg font-work">
+                        <TicketPercent size={20} className="min-w-[20px] min-h-[20px] stroke-[1.5] mr-2" />
+                        Discounts
+                    </span>
+                    <span />
+                </Link>
             </button>
             {/* <button className="w-full">
                 <SidebarRMA />

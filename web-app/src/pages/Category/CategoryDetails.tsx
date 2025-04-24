@@ -14,6 +14,9 @@ interface Category {
     createdAt: string;
 }
 
+const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+
 const CategoryDetails = () => {
     const { category_id } = useParams();
     const [category, setCategory] = useState<Category | null>(null);
@@ -45,11 +48,6 @@ const CategoryDetails = () => {
         if (category_id) {
             fetchCategory(category_id);
         }
-
-        toast({
-            description: 'NOTE: You can directly update values from here.',
-            className: 'rounded shadow-md border font-work',
-        });
     }, [category_id]);
 
     const handleClipboardPaste = async () => {
@@ -78,6 +76,44 @@ const CategoryDetails = () => {
         }
     };
 
+    const handleFileUpload = async (file: File) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+        try {
+            toast({
+                description: 'Uploading image...',
+                className: 'rounded shadow-md border font-work',
+            });
+
+            const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+                method: 'POST',
+                body: formData,
+            });
+
+            const data = await res.json();
+
+            if (data.secure_url) {
+                setCategoryImage(data.secure_url);
+                toast({
+                    title: 'Image uploaded successfully!',
+                    description: 'Click update category change image',
+                    className: 'rounded shadow-md border font-work bg-green-500',
+                });
+            } else {
+                throw new Error('Upload failed');
+            }
+        } catch (err) {
+            console.error(err);
+            toast({
+                variant: 'destructive',
+                description: 'Failed to upload image.',
+                className: 'rounded shadow-md border font-work',
+            });
+        }
+    };
+
     const handleUpdate = async (e: React.FormEvent, id: string, name: string, image: string) => {
         e.preventDefault();
         setLoading(true);
@@ -86,7 +122,7 @@ const CategoryDetails = () => {
             setCategory(res.data.data);
             toast({
                 description: 'Category updated successfully!',
-                className: 'rounded shadow-md border font-work',
+                className: 'rounded shadow-md border font-work bg-green-500',
             });
         } catch (error) {
             console.error(error);
@@ -118,7 +154,7 @@ const CategoryDetails = () => {
                     onSubmit={(e) => handleUpdate(e, category_id as string, categoryName, categoryImage)}
                     className="flex justify-start items-start flex-col lg:gap-y-6 lg:mt-4 lg:mb-10"
                 >
-                    <div className="flex justify-start items-start flex-col lg:gap-y-3 font-work capitalize dark:text-stone-100 text-stone-800">
+                    <div className="flex flex-col lg:gap-y-3 font-work capitalize dark:text-stone-100 text-stone-800">
                         <Label>Category Name</Label>
                         <Input
                             type="text"
@@ -129,7 +165,7 @@ const CategoryDetails = () => {
                         />
                     </div>
 
-                    <div className="flex justify-start items-start flex-col lg:gap-y-3 font-work capitalize dark:text-stone-100 text-stone-800">
+                    <div className="flex flex-col lg:gap-y-3 font-work capitalize dark:text-stone-100 text-stone-800">
                         <Label>Category Image</Label>
                         <Input
                             type="file"
@@ -137,23 +173,19 @@ const CategoryDetails = () => {
                             onChange={(e) => {
                                 const file = e.target.files?.[0];
                                 if (file) {
-                                    toast({
-                                        variant: 'destructive',
-                                        description: 'File upload is not supported yet. Use URL input below.',
-                                        className: 'rounded shadow-md border font-work',
-                                    });
+                                    handleFileUpload(file);
                                 }
                             }}
                             className="cursor-pointer rounded lg:w-[250px]"
                         />
 
-                        <div className="flex justify-start items-center lg:gap-x-2 font-work capitalize dark:text-stone-100 text-stone-800 mt-2">
+                        <div className="flex items-center gap-x-2 mt-2">
                             <Input
                                 type="text"
                                 value={categoryImage}
                                 onChange={(e) => setCategoryImage(e.target.value)}
-                                placeholder="Paste image URL here (Optional)"
-                                className="placeholder:capitalize rounded lg:w-[250px]"
+                                placeholder="Paste image URL here (optional)"
+                                className="rounded lg:w-[250px]"
                             />
                             <Button
                                 type="button"
@@ -169,7 +201,7 @@ const CategoryDetails = () => {
                         </div>
                     </div>
 
-                    <div className="flex justify-start items-start flex-col lg:gap-y-3 font-work capitalize dark:text-stone-100 text-stone-800">
+                    <div className="flex flex-col lg:gap-y-3 font-work capitalize dark:text-stone-100 text-stone-800">
                         <Label>Category ID</Label>
                         <Input
                             type="text"
@@ -180,7 +212,7 @@ const CategoryDetails = () => {
                         />
                     </div>
 
-                    <div className="flex justify-start items-start flex-col lg:gap-y-3 font-work capitalize dark:text-stone-100 text-stone-800">
+                    <div className="flex flex-col lg:gap-y-3 font-work capitalize dark:text-stone-100 text-stone-800">
                         <Label>Category Created Date:</Label>
                         <Input
                             type="text"

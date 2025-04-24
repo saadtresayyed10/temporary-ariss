@@ -9,7 +9,7 @@ import {
     useReactTable,
     VisibilityState,
 } from '@tanstack/react-table';
-import { ChevronDown, MoreHorizontal, Eye, Check, CheckCheck, X, Trash } from 'lucide-react';
+import { ChevronDown, MoreHorizontal, Eye, Check, CheckCheck, X, Trash, Loader2 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import {
     DropdownMenu,
@@ -26,7 +26,7 @@ import { acceptRMA, deleteRMA, rejectRMA, resolvedRMA } from '../../api/rmaAPI';
 import { Link } from 'react-router-dom';
 import { Badge } from '../../components/ui/badge';
 
-const apiURL = 'https://ariss-app-production.up.railway.app/api';
+const apiURL = `${import.meta.env.VITE_API_URL}/api`;
 
 type RMA = {
     rma_id: string;
@@ -46,24 +46,30 @@ type RMA = {
 export default function FetchAllRMARequests() {
     const [data, setData] = useState<RMA[]>([]);
     const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
-        rma_id: false, // hidden by default
-        product_issue: false,
+        rma_id: false,
+        first_name: false,
+        last_name: false,
     });
+    const [loading, setLoading] = useState(false);
+
+    const load = async () => {
+        setLoading(true);
+        try {
+            const res = await axios.get(`${apiURL}/rma`);
+            setData(res.data.data);
+        } catch (error) {
+            console.error(error);
+            toast({
+                variant: 'destructive',
+                description: 'Failed to load RMA requests',
+                className: 'rounded font-work',
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const load = async () => {
-            try {
-                const res = await axios.get(`${apiURL}/rma`);
-                setData(res.data.data);
-            } catch (error) {
-                console.error(error);
-                toast({
-                    variant: 'destructive',
-                    description: 'Failed to load RMA requests',
-                    className: 'rounded font-work',
-                });
-            }
-        };
         load();
     }, []);
 
@@ -71,21 +77,15 @@ export default function FetchAllRMARequests() {
         try {
             await acceptRMA(rma_id);
 
-            setTimeout(() => {
-                location.reload();
-            }, 1000);
-
             toast({
                 title: `RMA Request Accepted`,
                 description: `You have successfully accepted this RMA request.`,
                 className: 'bg-green-500 text-white font-work rounded shadow-md',
             });
+
+            load();
         } catch (error) {
             console.error(error);
-
-            setTimeout(() => {
-                location.reload();
-            }, 1000);
 
             toast({
                 title: `RMA Request Acceptance Failure`,
@@ -99,15 +99,13 @@ export default function FetchAllRMARequests() {
         try {
             await rejectRMA(rma_id);
 
-            setTimeout(() => {
-                location.reload();
-            }, 1000);
-
             toast({
                 title: `RMA Request Rejected`,
                 description: `You have successfully rejected this RMA request.`,
                 className: 'bg-green-500 text-white font-work rounded shadow-md',
             });
+
+            load();
         } catch (error) {
             console.error(error);
             toast({
@@ -122,15 +120,12 @@ export default function FetchAllRMARequests() {
         try {
             await resolvedRMA(rma_id);
 
-            setTimeout(() => {
-                location.reload();
-            }, 1000);
-
             toast({
                 title: `RMA Request Resolved`,
                 description: `You have successfully resolved this RMA request.`,
                 className: 'bg-green-500 text-white font-work rounded shadow-md',
             });
+            load();
         } catch (error) {
             console.error(error);
             toast({
@@ -145,15 +140,12 @@ export default function FetchAllRMARequests() {
         try {
             await deleteRMA(rma_id);
 
-            setTimeout(() => {
-                location.reload();
-            }, 1000);
-
             toast({
                 title: `RMA Deleted`,
                 description: `You have successfully deleted this RMA request.`,
                 className: 'bg-green-500 text-white font-work rounded shadow-md',
             });
+            load();
         } catch (error) {
             console.error(error);
             toast({
@@ -173,10 +165,33 @@ export default function FetchAllRMARequests() {
         {
             accessorKey: 'first_name',
             header: 'First Name',
+            id: 'first_name',
         },
         {
             accessorKey: 'last_name',
             header: 'Last Name',
+            id: 'last_name',
+        },
+        {
+            header: 'Name',
+            accessorKey: 'name', // this can be anything, not used here directly
+            cell: ({ row }) => {
+                const first = row.getValue('first_name');
+                const last = row.getValue('last_name');
+                return `${first} ${last}`;
+            },
+        },
+        {
+            accessorKey: 'product_name',
+            header: 'Product',
+        },
+        {
+            accessorKey: 'product_serial',
+            header: 'Serial No.',
+        },
+        {
+            accessorKey: 'business_name',
+            header: 'Business',
         },
         {
             accessorKey: 'user_type',
@@ -192,20 +207,10 @@ export default function FetchAllRMARequests() {
             header: 'Phone',
         },
         {
-            accessorKey: 'product_name',
-            header: 'Product',
-        },
-        {
-            accessorKey: 'product_serial',
-            header: 'Serial No.',
-        },
-        {
             accessorKey: 'product_issue',
             header: 'Issue',
             id: 'product_issue',
-            cell: ({ row }) => (
-                <div className="line-clamp-2 max-w-[200px]">{row.getValue('product_issue')}</div>
-            ),
+            cell: ({ row }) => <div className="max-w-[200px] truncate">{row.getValue('product_issue')}</div>,
         },
         {
             accessorKey: 'status',
@@ -282,7 +287,7 @@ export default function FetchAllRMARequests() {
             <div className="flex items-center justify-between gap-2 flex-wrap">
                 <Input
                     placeholder="Search RMA ID..."
-                    onChange={(e) => table.getColumn('rma_id')?.setFilterValue(e.target.value)}
+                    onChange={(e) => table.getColumn('business_name')?.setFilterValue(e.target.value)}
                     className="max-w-sm rounded"
                 />
                 <DropdownMenu>
@@ -328,7 +333,10 @@ export default function FetchAllRMARequests() {
                     <TableBody>
                         {table.getRowModel().rows.length ? (
                             table.getRowModel().rows.map((row) => (
-                                <TableRow key={row.id} className="p-4">
+                                <TableRow
+                                    className="p-4 odd:bg-gray-100 even:bg-white dark:even:bg-stone-500/20 dark:odd:bg-stone-800 transition-colors"
+                                    key={row.id}
+                                >
                                     {row.getVisibleCells().map((cell) => (
                                         <TableCell key={cell.id} className="whitespace-nowrap text-sm p-4">
                                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -338,8 +346,14 @@ export default function FetchAllRMARequests() {
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={columns.length} className="h-24 text-center">
-                                    No RMA requests found.
+                                <TableCell colSpan={columns.length}>
+                                    <div className="h-24 flex items-center justify-center">
+                                        {loading ? (
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                            <span className="text-center">No RMA Requests Found</span>
+                                        )}
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         )}

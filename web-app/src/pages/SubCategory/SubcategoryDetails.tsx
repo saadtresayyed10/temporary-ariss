@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { toast } from '../../hooks/use-toast';
-import { fetchSingleSubcategory } from '../../api/subCategoryAPI';
+import { fetchSingleSubcategory, updateSubcategory } from '../../api/subCategoryAPI';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Clipboard, Loader2 } from 'lucide-react';
-import axios from 'axios';
 
 interface Subcategory {
     subcategory_id: string;
@@ -17,12 +16,15 @@ interface Subcategory {
     };
 }
 
+const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+
 const SubcategoryDetails = () => {
     const { subcategory_id } = useParams();
     const [subcategory, setSubcategory] = useState<Subcategory | null>(null);
     const [loading, setLoading] = useState(false);
-    const [subcategory_name, setSubcategoryName] = useState('');
-    const [subcategory_image, setSubcategoryImage] = useState('');
+    const [subcategoryName, setSubcategoryName] = useState('');
+    const [subcategoryImage, setSubcategoryImage] = useState('');
 
     useEffect(() => {
         const fetchData = async (id: string) => {
@@ -30,7 +32,6 @@ const SubcategoryDetails = () => {
             try {
                 const response = await fetchSingleSubcategory(id);
                 const sub = response?.data?.data?.[0];
-
                 if (!sub) throw new Error('No subcategory data found.');
 
                 setSubcategory(sub);
@@ -50,10 +51,6 @@ const SubcategoryDetails = () => {
 
         if (subcategory_id) {
             fetchData(subcategory_id);
-            toast({
-                description: 'NOTE: You can directly update values from here.',
-                className: 'rounded shadow-md border font-work',
-            });
         }
     }, [subcategory_id]);
 
@@ -83,29 +80,59 @@ const SubcategoryDetails = () => {
         }
     };
 
+    const handleFileUpload = async (file: File) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+        try {
+            toast({
+                description: 'Uploading image...',
+                className: 'rounded shadow-md border font-work',
+            });
+
+            const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+                method: 'POST',
+                body: formData,
+            });
+
+            const data = await res.json();
+
+            if (data.secure_url) {
+                setSubcategoryImage(data.secure_url);
+                toast({
+                    title: 'Image uploaded successfully!',
+                    description: 'Click update to save changes',
+                    className: 'rounded shadow-md border font-work bg-green-500',
+                });
+            } else {
+                throw new Error('Upload failed');
+            }
+        } catch (err) {
+            console.error(err);
+            toast({
+                variant: 'destructive',
+                description: 'Failed to upload image.',
+                className: 'rounded shadow-md border font-work',
+            });
+        }
+    };
+
     const handleUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!subcategory_id) return;
-
         setLoading(true);
         try {
-            const res = await axios.put(
-                `https://ariss-app-production.up.railway.app/api/products/category/sub/${subcategory_id}`,
-                {
-                    subcategory_name,
-                    subcategory_image,
-                }
-            );
+            const res = await updateSubcategory(subcategory_id as string, subcategoryName, subcategoryImage);
             setSubcategory(res.data.data);
             toast({
                 description: 'Subcategory updated successfully!',
-                className: 'rounded shadow-md border font-work',
+                className: 'rounded shadow-md border font-work bg-green-500',
             });
         } catch (error) {
             console.error(error);
             toast({
                 variant: 'destructive',
-                description: 'Error updating subcategory.',
+                description: 'Error while updating subcategory.',
                 className: 'rounded shadow-md border font-work',
             });
         } finally {
@@ -113,24 +140,41 @@ const SubcategoryDetails = () => {
         }
     };
 
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center h-screen">
+                <Loader2 className="w-8 h-8 animate-spin" />
+            </div>
+        );
+    }
+
     return (
         <div className="flex flex-col lg:gap-y-6 justify-start w-full h-full lg:p-12 bg-transparent lg:px-4 lg:py-8">
             <h1 className="font-work text-left text-6xl font-semibold capitalize dark:text-stone-100 text-stone-800">
                 Subcategory Details:
             </h1>
-
-            <div className="flex justify-between items-start w-full lg:mb-10">
+            <div className="flex justify-between items-center w-full lg:mb-10">
                 <form
                     onSubmit={handleUpdate}
                     className="flex justify-start items-start flex-col lg:gap-y-6 lg:mt-4 lg:mb-10"
                 >
+                    <div className="flex flex-col gap-y-3 font-work capitalize dark:text-stone-100 text-stone-800">
+                        <Label>Subcategory ID</Label>
+                        <Input
+                            type="text"
+                            value={subcategory?.subcategory_id ?? ''}
+                            placeholder="Subcategory ID"
+                            className="rounded lg:w-[250px]"
+                            disabled
+                        />
+                    </div>
+
                     <div className="flex flex-col lg:gap-y-3 font-work capitalize dark:text-stone-100 text-stone-800">
                         <Label>Subcategory Name</Label>
                         <Input
                             type="text"
-                            value={subcategory_name}
+                            value={subcategoryName}
                             onChange={(e) => setSubcategoryName(e.target.value)}
-                            placeholder="Subcategory Name"
                             className="rounded lg:w-[250px]"
                         />
                     </div>
@@ -140,22 +184,22 @@ const SubcategoryDetails = () => {
                         <Input
                             type="file"
                             accept="image/*"
-                            onChange={() =>
-                                toast({
-                                    variant: 'destructive',
-                                    description: 'File uploads not supported. Use URL instead.',
-                                    className: 'rounded shadow-md border font-work',
-                                })
-                            }
+                            onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                    handleFileUpload(file);
+                                }
+                            }}
                             className="cursor-pointer rounded lg:w-[250px]"
                         />
+
                         <div className="flex items-center gap-x-2 mt-2">
                             <Input
                                 type="text"
-                                value={subcategory_image}
+                                value={subcategoryImage}
                                 onChange={(e) => setSubcategoryImage(e.target.value)}
-                                placeholder="Paste image URL here (Optional)"
-                                className="placeholder:capitalize rounded lg:w-[250px]"
+                                placeholder="Paste image URL here (optional)"
+                                className="rounded lg:w-[250px]"
                             />
                             <Button
                                 type="button"
@@ -169,46 +213,32 @@ const SubcategoryDetails = () => {
                                 />
                             </Button>
                         </div>
-                    </div>
 
-                    <div className="flex flex-col gap-y-3 font-work capitalize dark:text-stone-100 text-stone-800">
-                        <Label>Subcategory ID</Label>
-                        <Input
-                            type="text"
-                            value={subcategory?.subcategory_id ?? ''}
-                            placeholder="Subcategory ID"
-                            className="rounded lg:w-[250px]"
-                            disabled
-                        />
-                    </div>
-
-                    <div className="flex flex-col gap-y-3 font-work capitalize dark:text-stone-100 text-stone-800">
-                        <Label>Category Name</Label>
-                        <Input
-                            type="text"
-                            value={subcategory?.category?.category_name ?? ''}
-                            placeholder="Category"
-                            className="rounded lg:w-[250px]"
-                            disabled
-                        />
+                        <div className="mt-4 flex flex-col gap-y-3 font-work capitalize dark:text-stone-100 text-stone-800">
+                            <Label>Category Name</Label>
+                            <Input
+                                type="text"
+                                value={subcategory?.category?.category_name ?? ''}
+                                placeholder="Category"
+                                className="rounded lg:w-[250px]"
+                                disabled
+                            />
+                        </div>
                     </div>
 
                     <Button
                         type="submit"
-                        disabled={loading}
-                        className="mt-4 w-fit px-6 py-2 font-semibold rounded shadow bg-stone-800 text-white hover:bg-stone-700 disabled:opacity-60"
+                        className="mt-4 w-fit px-6 py-2 font-semibold rounded shadow bg-stone-800 text-white hover:bg-stone-700"
                     >
-                        {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : 'Update Subcategory'}
+                        Update Subcategory
                     </Button>
                 </form>
 
-                {subcategory?.subcategory_image && (
-                    <img
-                        src={subcategory.subcategory_image}
-                        alt={subcategory.subcategory_name ?? 'Subcategory image'}
-                        className="object-contain lg:min-h-[400px] lg:max-h-[500px] lg:min-w-[400px] lg:max-w-[500px] shadow-md rounded border lg:mb-10 lg:mr-20"
-                    />
-                )}
+                <img
+                    src={subcategory?.subcategory_image}
+                    alt={subcategory?.subcategory_name}
+                    className="object-contain lg:min-h-[400px] lg:max-h-[500px] lg:min-w-[400px] lg:max-w-[500px] shadow-md rounded border lg:mb-10 lg:mr-20"
+                />
             </div>
         </div>
     );

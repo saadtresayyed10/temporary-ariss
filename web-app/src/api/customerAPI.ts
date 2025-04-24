@@ -1,6 +1,17 @@
 import axios from 'axios';
 import { apiURL } from './apiURL';
 
+type Dealer = {
+    dealer_id: string;
+    phone: string;
+    email: string;
+    gstin: string;
+    business_name: string;
+    first_name: string;
+    last_name: string;
+    profile_pic: string;
+};
+
 // Fetch all sorts of customers API endpoint
 export const getAllCustomers = async () => {
     return await axios.get(`${apiURL}/customer/all`);
@@ -34,6 +45,16 @@ export const approveDealer = async (dealer_id: string) => {
 // Disapprove a dealer API
 export const disapproveDealer = async (dealer_id: string) => {
     return await axios.put(`${apiURL}/customer/dealers/not-approved/${dealer_id}`);
+};
+
+// Get single dealer
+export const fetchSingleDealer = async (dealer_id: string) => {
+    return await axios.get(`${apiURL}/customer/dealers/view-edit/${dealer_id}`);
+};
+
+// Update dealer's info
+export const updateDealer = async (dealer_id: string, data: Dealer) => {
+    return await axios.put(`${apiURL}/customer/dealers/edit/${dealer_id}`, data);
 };
 
 // Approve a technician API

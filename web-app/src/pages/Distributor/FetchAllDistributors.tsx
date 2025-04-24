@@ -21,8 +21,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Input } from '../../components/ui/input';
 import { Checkbox } from '../../components/ui/checkbox';
 import { Badge } from '../../components/ui/badge';
-import { ChevronDown, Eye, Trash, MoreHorizontal, Loader2, Pencil, UserRoundX } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { ChevronDown, Eye, Trash, MoreHorizontal, Loader2, UserRoundX } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from '../../hooks/use-toast';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../../components/ui/dialog';
 
@@ -54,10 +54,13 @@ interface DistributorDealer {
 const FetchAllDistributors = () => {
     const [data, setData] = useState<DistributorDealer[]>([]);
     const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
     const [globalFilter, setGlobalFilter] = useState('');
     const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({
         createdAt: false,
         billing_address: false,
+        first_name: false,
+        last_name: false,
     });
 
     const [modalOpen, setModalOpen] = useState(false);
@@ -66,8 +69,21 @@ const FetchAllDistributors = () => {
 
     useEffect(() => {
         const fetchData = async () => {
-            const res = await getAllDistributors();
-            setData(res.data.data);
+            setLoading(true);
+            try {
+                const res = await getAllDistributors();
+                setData(res.data.data);
+            } catch (error) {
+                console.error(error);
+                toast({
+                    variant: 'destructive',
+                    title: 'Error fetching distributors',
+                    description: 'There was an error fetching distributors. Please try again later...',
+                    className: 'font-work border rounded shadow',
+                });
+            } finally {
+                setLoading(false);
+            }
         };
 
         fetchData();
@@ -152,10 +168,21 @@ const FetchAllDistributors = () => {
         {
             accessorKey: 'first_name',
             header: 'First Name',
+            id: 'first_name',
         },
         {
             accessorKey: 'last_name',
             header: 'Last Name',
+            id: 'last_name',
+        },
+        {
+            header: 'Name',
+            accessorKey: 'name', // this can be anything, not used here directly
+            cell: ({ row }) => {
+                const first = row.getValue('first_name');
+                const last = row.getValue('last_name');
+                return `${first} ${last}`;
+            },
         },
         {
             accessorKey: 'business_name',
@@ -167,6 +194,14 @@ const FetchAllDistributors = () => {
             cell: ({ row }) => {
                 const state = row.getValue('shipping_address') as Address;
                 return <div className="max-w-[220px]">{`${state.stcd}`}</div>;
+            },
+        },
+        {
+            accessorKey: 'shipping_address',
+            header: 'City',
+            cell: ({ row }) => {
+                const state = row.getValue('shipping_address') as Address;
+                return <div className="max-w-[220px]">{`${state.dst}`}</div>;
             },
         },
         {
@@ -187,7 +222,7 @@ const FetchAllDistributors = () => {
             cell: ({ row }) => {
                 const address = row.getValue('shipping_address') as Address;
                 return (
-                    <div className="max-w-[220px] truncate">
+                    <div>
                         {`${address.adr}, ${address.loc}, ${address.dst}, ${address.stcd} - ${address.pncd}`}
                     </div>
                 );
@@ -200,7 +235,7 @@ const FetchAllDistributors = () => {
             cell: ({ row }) => {
                 const address = row.getValue('billing_address') as Address;
                 return (
-                    <div className="max-w-[220px] truncate">
+                    <div>
                         {`${address.adr}, ${address.loc}, ${address.dst}, ${address.stcd} - ${address.pncd}`}
                     </div>
                 );
@@ -252,22 +287,15 @@ const FetchAllDistributors = () => {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="rounded font-work">
                             <DropdownMenuItem asChild>
-                                <Link
-                                    to={`/customers/approved/${dealer.dealer_id}`}
+                                <h6
+                                    onClick={() =>
+                                        navigate(`/customers/dealers/view-edit/${dealer.dealer_id}`)
+                                    }
                                     className="flex items-center justify-between w-full cursor-pointer"
                                 >
-                                    View
+                                    View & Edit
                                     <Eye className="ml-2 h-4 w-4" />
-                                </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                                <Link
-                                    to={`/customers/approved/${dealer.dealer_id}`}
-                                    className="flex items-center justify-between w-full cursor-pointer"
-                                >
-                                    Edit
-                                    <Pencil className="ml-2 h-4 w-4" />
-                                </Link>
+                                </h6>
                             </DropdownMenuItem>
                             <DropdownMenuItem
                                 onClick={() =>
@@ -312,12 +340,56 @@ const FetchAllDistributors = () => {
     return (
         <div className="space-y-4 p-6 font-work rounded">
             <div className="flex items-center justify-between">
-                <Input
-                    placeholder="Search distributors..."
-                    value={globalFilter}
-                    onChange={(e) => setGlobalFilter(e.target.value)}
-                    className="w-[250px] rounded"
-                />
+                <div className="flex justify-start items-start flex-col gap-y-4">
+                    <Input
+                        placeholder="Search distributors..."
+                        value={globalFilter}
+                        onChange={(e) => setGlobalFilter(e.target.value)}
+                        className="w-[250px] rounded"
+                    />
+                    <div className="flex justify-start items-center gap-x-6">
+                        <Button
+                            onClick={() => navigate('/customers')}
+                            size="sm"
+                            className="rounded"
+                            variant="outline"
+                        >
+                            All Customers
+                        </Button>
+                        <Button
+                            onClick={() => navigate('/customers/dealers/approved')}
+                            size="sm"
+                            className="rounded"
+                            variant="outline"
+                        >
+                            Approved Dealers
+                        </Button>
+                        <Button
+                            onClick={() => navigate('/customers/dealers/not-approved')}
+                            size="sm"
+                            className="rounded"
+                            variant="outline"
+                        >
+                            Disapproved Dealers
+                        </Button>
+                        <Button
+                            onClick={() => navigate('/customers/technicians')}
+                            size="sm"
+                            className="rounded"
+                            variant="outline"
+                        >
+                            Technicians
+                        </Button>
+                        <Button
+                            onClick={() => navigate('/customers/backoffices')}
+                            size="sm"
+                            className="rounded"
+                            variant="outline"
+                        >
+                            Back Offices
+                        </Button>
+                    </div>
+                </div>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button variant="outline" className="rounded flex items-center gap-2">
@@ -364,7 +436,11 @@ const FetchAllDistributors = () => {
                     <TableBody>
                         {table.getRowModel().rows.length ? (
                             table.getRowModel().rows.map((row) => (
-                                <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
+                                <TableRow
+                                    className="odd:bg-gray-100 even:bg-white dark:even:bg-stone-500/20 dark:odd:bg-stone-800"
+                                    key={row.id}
+                                    data-state={row.getIsSelected() && 'selected'}
+                                >
                                     {row.getVisibleCells().map((cell) => (
                                         <TableCell key={cell.id} className="px-4 py-2 whitespace-nowrap">
                                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -374,8 +450,14 @@ const FetchAllDistributors = () => {
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={columns.length} className="text-center h-24">
-                                    No distributors found.
+                                <TableCell colSpan={columns.length}>
+                                    <div className="flex justify-center items-center w-full h-24">
+                                        {loading ? (
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                            <span className="text-center">No Distributors Found</span>
+                                        )}
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         )}

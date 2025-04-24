@@ -5,7 +5,6 @@ import { Button } from '../../components/ui/button';
 import { useState } from 'react';
 import { useToast } from '../../hooks/use-toast';
 import { addCategoryAPI } from '../../api/categoryAPI';
-import { useNavigate } from 'react-router-dom';
 
 const AddCategory = () => {
     const [name, setName] = useState<string>('');
@@ -13,7 +12,6 @@ const AddCategory = () => {
     const [pasteImage, setPasteImage] = useState<string>('');
     const [loading, setLoading] = useState<boolean>(false);
 
-    const navigate = useNavigate();
     const { toast } = useToast();
 
     const handleClipboardPaste = async () => {
@@ -32,6 +30,25 @@ const AddCategory = () => {
                 className: 'rounded font-work shadow-xl',
             });
         }
+    };
+
+    const uploadToCloudinary = async (file: File): Promise<string> => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
+
+        const res = await fetch(
+            `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/image/upload`,
+            {
+                method: 'POST',
+                body: formData,
+            }
+        );
+
+        if (!res.ok) throw new Error('Cloudinary upload failed');
+
+        const data = await res.json();
+        return data.secure_url;
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -67,21 +84,18 @@ const AddCategory = () => {
         setLoading(true);
 
         try {
-            // If image file is selected, handle upload here
             let categoryImage = pasteImage;
 
             if (image) {
-                // Upload image to your server or S3 bucket, get the URL
-                // Here we simulate that and just create a fake URL
-                categoryImage = `http://localhost:5000/uploads/${image.name}`;
+                categoryImage = await uploadToCloudinary(image);
             }
 
             await addCategoryAPI(name, categoryImage);
             toast({
-                className: 'rounded font-work shadow-xl bg-green-500',
-                description: 'Category added successfully.',
+                className: 'rounded font-work shadow bg-green-500',
+                title: 'Category added successfully',
+                description: 'Make sure to add subcategories as well...',
             });
-            setTimeout(() => navigate('/categories'), 1000);
         } catch (error) {
             console.error(error);
             toast({

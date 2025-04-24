@@ -27,7 +27,7 @@ import { Input } from '../../components/ui/input';
 import { Checkbox } from '../../components/ui/checkbox';
 import { Badge } from '../../components/ui/badge';
 import { ChevronDown, Eye, Trash, MoreHorizontal, ShieldX, ShieldPlus, Pencil, Loader2 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { toast } from '../../hooks/use-toast';
 import {
     Dialog,
@@ -62,6 +62,7 @@ interface BackOffice {
 const FetchAllBackOffices = () => {
     const [data, setData] = useState<BackOffice[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
+    const navigate = useNavigate();
     const [globalFilter, setGlobalFilter] = useState('');
     const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({
         createdAt: false,
@@ -78,6 +79,7 @@ const FetchAllBackOffices = () => {
 
     useEffect(() => {
         const fetchData = async () => {
+            setLoading(true);
             try {
                 const res = await getAllBackOffices();
                 if (res.data.success) {
@@ -85,6 +87,8 @@ const FetchAllBackOffices = () => {
                 }
             } catch (err) {
                 console.error('Failed to fetch back offices:', err);
+            } finally {
+                setLoading(false);
             }
         };
         fetchData();
@@ -349,12 +353,56 @@ const FetchAllBackOffices = () => {
     return (
         <div className="space-y-4 p-6 font-work rounded">
             <div className="flex items-center justify-between">
-                <Input
-                    placeholder="Search back offices..."
-                    value={globalFilter}
-                    onChange={(e) => setGlobalFilter(e.target.value)}
-                    className="w-[250px] rounded"
-                />
+                <div className="flex justify-start items-start flex-col gap-y-4">
+                    <Input
+                        placeholder="Search back offices..."
+                        value={globalFilter}
+                        onChange={(e) => setGlobalFilter(e.target.value)}
+                        className="w-[250px] rounded"
+                    />
+                    <div className="flex justify-start items-center gap-x-6">
+                        <Button
+                            onClick={() => navigate('/customers')}
+                            size="sm"
+                            className="rounded"
+                            variant="outline"
+                        >
+                            All Customers
+                        </Button>
+                        <Button
+                            onClick={() => navigate('/customers/distributors')}
+                            size="sm"
+                            className="rounded"
+                            variant="outline"
+                        >
+                            Distributors
+                        </Button>
+                        <Button
+                            onClick={() => navigate('/customers/dealers/approved')}
+                            size="sm"
+                            className="rounded"
+                            variant="outline"
+                        >
+                            Approved Dealers
+                        </Button>
+                        <Button
+                            onClick={() => navigate('/customers/dealers/not-approved')}
+                            size="sm"
+                            className="rounded"
+                            variant="outline"
+                        >
+                            Disapproved Dealers
+                        </Button>
+                        <Button
+                            onClick={() => navigate('/customers/technicians')}
+                            size="sm"
+                            className="rounded"
+                            variant="outline"
+                        >
+                            Technicians
+                        </Button>
+                    </div>
+                </div>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button variant="outline" className="rounded flex items-center gap-2">
@@ -401,7 +449,11 @@ const FetchAllBackOffices = () => {
                     <TableBody>
                         {table.getRowModel().rows.length ? (
                             table.getRowModel().rows.map((row) => (
-                                <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
+                                <TableRow
+                                    className="odd:bg-gray-100 even:bg-white dark:even:bg-stone-500/20 dark:odd:bg-stone-800"
+                                    key={row.id}
+                                    data-state={row.getIsSelected() && 'selected'}
+                                >
                                     {row.getVisibleCells().map((cell) => (
                                         <TableCell key={cell.id} className="px-4 py-2 whitespace-nowrap">
                                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -411,8 +463,14 @@ const FetchAllBackOffices = () => {
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={columns.length} className="text-center h-24">
-                                    No back offices found.
+                                <TableCell colSpan={columns.length}>
+                                    <div className="flex justify-center items-center w-full h-24">
+                                        {loading ? (
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                            <span className="text-center">No Backoffices Found</span>
+                                        )}
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         )}

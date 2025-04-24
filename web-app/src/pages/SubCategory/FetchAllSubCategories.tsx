@@ -14,10 +14,10 @@ import {
     Clipboard,
     Eye,
     MoreHorizontal,
-    Pencil,
     Trash,
     Loader2,
-    SlidersHorizontal,
+    ChevronDown,
+    PlusCircle,
 } from 'lucide-react';
 
 import { Button } from '../../components/ui/button';
@@ -42,10 +42,10 @@ import {
 import { Label } from '../../components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
 import { toast } from '../../hooks/use-toast';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
-const apiURL = 'https://ariss-app-production.up.railway.app/api';
+const apiURL = 'http://localhost:5000/api';
 
 export type Subcategory = {
     subcategory_id: string;
@@ -68,21 +68,27 @@ export default function FetchAllSubcategories() {
     const [modalData, setModalData] = useState<{ name: string; id: string } | null>(null);
     const [confirmInput, setConfirmInput] = useState('');
     const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+    const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
+
+    const load = async () => {
+        setLoading(true);
+        try {
+            const subcategories = await fetchAllSubcategories();
+            setData(subcategories);
+        } catch (error) {
+            console.error(error);
+            toast({
+                variant: 'destructive',
+                description: 'Failed to load subcategories',
+                className: 'rounded font-work border shadow',
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const load = async () => {
-            try {
-                const subcategories = await fetchAllSubcategories();
-                setData(subcategories);
-            } catch (error) {
-                console.error(error);
-                toast({
-                    variant: 'destructive',
-                    description: 'Failed to load subcategories',
-                    className: 'rounded font-work',
-                });
-            }
-        };
         load();
     }, []);
 
@@ -188,12 +194,8 @@ export default function FetchAllSubcategories() {
                                 Copy ID <Clipboard />
                             </DropdownMenuItem>
                             <DropdownMenuItem className="flex justify-between cursor-pointer">
-                                <Link to={`/subcategories/${sub.subcategory_id}`}>View</Link>
+                                <Link to={`/subcategories/${sub.subcategory_id}`}>View & Edit</Link>
                                 <Eye />
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="flex justify-between cursor-pointer">
-                                <Link to={`/subcategories/${sub.subcategory_id}`}>Edit</Link>
-                                <Pencil />
                             </DropdownMenuItem>
                             <DropdownMenuItem
                                 className="text-red-500 flex justify-between cursor-pointer"
@@ -227,19 +229,48 @@ export default function FetchAllSubcategories() {
     return (
         <div className="w-full">
             <div className="flex items-center justify-between py-4">
-                <Input
-                    placeholder="Search subcategories..."
-                    onChange={(e) => table.getColumn('subcategory_name')?.setFilterValue(e.target.value)}
-                    className="max-w-sm rounded font-work"
-                />
+                <div className="flex justify-start items-center flex-col gap-y-4">
+                    <Input
+                        placeholder="Search subcategories..."
+                        onChange={(e) => table.getColumn('subcategory_name')?.setFilterValue(e.target.value)}
+                        className="max-w-sm rounded font-work min-w-[300px]"
+                    />
+                    <div className="flex justify-start items-center gap-x-6 w-full">
+                        <Button
+                            onClick={() => navigate('/categories')}
+                            size="sm"
+                            className="rounded"
+                            variant="outline"
+                        >
+                            Categories
+                        </Button>
+                        <Button
+                            onClick={() => navigate('/products')}
+                            size="sm"
+                            className="rounded"
+                            variant="outline"
+                        >
+                            Products
+                        </Button>
+                    </div>
+                </div>
 
                 <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="ml-auto rounded font-work">
-                            <SlidersHorizontal className="mr-2 h-4 w-4" />
-                            Columns
+                    <div className="flex justify-center items-center gap-x-4">
+                        <Button
+                            variant="default"
+                            className="rounded"
+                            onClick={() => navigate('/subcategories/add')}
+                        >
+                            Add Subcategories <PlusCircle className="ml-2 h-4 w-4" />
                         </Button>
-                    </DropdownMenuTrigger>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" className="ml-auto rounded font-work">
+                                Filter
+                                <ChevronDown className="mr-2 h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                    </div>
                     <DropdownMenuContent align="end" className="rounded font-work">
                         {table
                             .getAllColumns()
@@ -276,7 +307,10 @@ export default function FetchAllSubcategories() {
                     <TableBody>
                         {table.getRowModel().rows.length ? (
                             table.getRowModel().rows.map((row) => (
-                                <TableRow key={row.id}>
+                                <TableRow
+                                    className="odd:bg-gray-100 even:bg-white dark:even:bg-stone-500/20 dark:odd:bg-stone-800"
+                                    key={row.id}
+                                >
                                     {row.getVisibleCells().map((cell) => (
                                         <TableCell key={cell.id}>
                                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -286,8 +320,14 @@ export default function FetchAllSubcategories() {
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={columns.length} className="h-24 text-center font-work">
-                                    No results.
+                                <TableCell colSpan={columns.length}>
+                                    <div className="flex justify-center items-center w-full h-24">
+                                        {loading ? (
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                            <span className="text-center">No Subcategories Found</span>
+                                        )}
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         )}

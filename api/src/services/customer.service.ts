@@ -17,6 +17,17 @@ export const getAllApprovedCustomerService = async () => {
     return dealers;
 };
 
+// Fetch single dealer
+export const getSingleDealerService = async (dealer_id: string) => {
+    const dealer = await prisma.dealers.findUnique({
+        where: { dealer_id },
+    });
+
+    if (!dealer) throw new Error('Dealer does not exist with that ID');
+
+    return dealer;
+};
+
 // Fetch all approved dealers who are also distributors
 export const getAllDistributorCustomerService = async () => {
     const dealers = await prisma.dealers.findMany({

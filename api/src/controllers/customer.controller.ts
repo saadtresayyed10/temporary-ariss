@@ -12,6 +12,7 @@ import {
     getAllDistributorCustomerService,
     getAllNotApprovedCustomerService,
     getAllTechniciansService,
+    getSingleDealerService,
     updateBackOfficeService,
     updateDealerService,
     updateDistributorToDealerService,
@@ -38,6 +39,22 @@ export const getAllApprovedCustomerController = async (req: Request, res: Respon
         }
 
         return res.status(200).json({ success: true, total: dealers.length, data: dealers });
+    } catch (error: any) {
+        return res.status(400).json({ success: false, error: error.message });
+    }
+};
+
+// Fetch single dealer controller
+export const getSingleDealerController = async (req: Request, res: Response) => {
+    try {
+        const { dealer_id } = req.params;
+
+        if (!dealer_id) {
+            return res.status(400).json({ success: false, error: 'Dealer with this ID is invalid' });
+        }
+
+        const dealer = await getSingleDealerService(dealer_id);
+        return res.status(200).json({ success: true, data: dealer });
     } catch (error: any) {
         return res.status(400).json({ success: false, error: error.message });
     }

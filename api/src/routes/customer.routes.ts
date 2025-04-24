@@ -12,6 +12,7 @@ import {
     getAllDistributorCustomerController,
     getAllNotApprovedCustomerController,
     getAllTechniciansController,
+    getSingleDealerController,
     updateBackOfficeController,
     updateDealerController,
     updateDistributorToDealerController,
@@ -45,6 +46,9 @@ customerRoutes.put('/dealers/edit/:dealer_id', updateDealerController);
 
 // Delete a dealer account permanently
 customerRoutes.delete('/dealers/:dealer_id', deleteDealerController);
+
+// Fetch single dealer
+customerRoutes.get('/dealers/view-edit/:dealer_id', getSingleDealerController);
 
 /**
  * =====================

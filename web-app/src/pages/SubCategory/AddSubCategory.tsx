@@ -6,7 +6,6 @@ import { Button } from '../../components/ui/button';
 import { useEffect, useState } from 'react';
 import { useToast } from '../../hooks/use-toast';
 import { addSubcategory, getCategoryNames } from '../../api/subCategoryAPI';
-import { useNavigate } from 'react-router-dom';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 
 type Category = {
@@ -24,7 +23,6 @@ const AddSubcategory = () => {
     const [loading, setLoading] = useState(false);
 
     const { toast } = useToast();
-    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchCategories = async () => {
@@ -62,6 +60,25 @@ const AddSubcategory = () => {
         }
     };
 
+    const uploadToCloudinary = async (file: File): Promise<string> => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
+
+        const res = await fetch(
+            `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/image/upload`,
+            {
+                method: 'POST',
+                body: formData,
+            }
+        );
+
+        if (!res.ok) throw new Error('Cloudinary upload failed');
+
+        const data = await res.json();
+        return data.secure_url;
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -97,25 +114,21 @@ const AddSubcategory = () => {
             });
         }
 
-        if (image) {
-            return toast({
-                variant: 'destructive',
-                description: 'File upload not supported yet. Paste an image URL.',
-                className: 'rounded font-work shadow-xl',
-            });
-        }
-
         setLoading(true);
 
         try {
-            await addSubcategory(selectedCategoryName, subcategoryName, pasteImage);
+            let subcategoryImage = pasteImage;
+
+            if (image) {
+                subcategoryImage = await uploadToCloudinary(image);
+            }
+
+            await addSubcategory(selectedCategoryName, subcategoryName, subcategoryImage);
 
             toast({
                 className: 'rounded font-work shadow-xl bg-green-500 text-white',
                 description: 'Subcategory added successfully.',
             });
-
-            setTimeout(() => navigate('/subcategories'), 1000);
         } catch (error) {
             console.error(error);
             toast({

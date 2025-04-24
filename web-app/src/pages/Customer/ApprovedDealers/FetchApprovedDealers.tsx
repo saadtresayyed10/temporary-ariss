@@ -33,10 +33,10 @@ import {
     MoreHorizontal,
     ShieldX,
     Loader2,
-    Pencil,
     UserRoundCheck,
+    UserCircle2,
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { toast } from '../../../hooks/use-toast';
 import {
     Dialog,
@@ -74,10 +74,12 @@ interface ApprovedDealer {
 const FetchAllApprovedDealers = () => {
     const [data, setData] = useState<ApprovedDealer[]>([]);
     const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
     const [globalFilter, setGlobalFilter] = useState('');
     const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({
         createdAt: false, // FilterSilter default hide
-        billing_address: false,
+        first_name: false,
+        last_name: false,
     });
 
     // Modal and confirm deletion state
@@ -85,21 +87,26 @@ const FetchAllApprovedDealers = () => {
     const [confirmText, setConfirmText] = useState('');
     const [pendingDealer, setPendingDealer] = useState<{ id: string; name: string } | null>(null);
 
+    const fetchData = async () => {
+        setLoading(true);
+        try {
+            const res = await getAllApprovedDealers();
+            setData(res.data.data);
+        } catch (err) {
+            console.error(err);
+            toast({
+                title: 'Failed to fetch dealers',
+                variant: 'destructive',
+                description: 'Something went wrong while fetching approved dealers.',
+                className: 'font-work rounded shadow border',
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
+
     // Fetch data on mount
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const res = await getAllApprovedDealers();
-                setData(res.data.data);
-            } catch (err) {
-                console.error(err);
-                toast({
-                    title: 'Failed to fetch dealers',
-                    description: 'Something went wrong while fetching approved dealers.',
-                    className: 'bg-red-500 text-white font-work',
-                });
-            }
-        };
         fetchData();
     }, []);
 
@@ -123,6 +130,7 @@ const FetchAllApprovedDealers = () => {
             });
             // Refresh list after deletion
             setData((prev) => prev.filter((d) => d.dealer_id !== pendingDealer.id));
+            fetchData();
         } catch (err) {
             console.error(err);
             toast({
@@ -144,6 +152,7 @@ const FetchAllApprovedDealers = () => {
             await disapproveDealer(dealer_id);
 
             setData((prev) => prev.filter((d) => d.dealer_id !== dealer_id));
+            fetchData();
 
             toast({
                 title: `${business_name} disapproved`,
@@ -171,9 +180,7 @@ const FetchAllApprovedDealers = () => {
             await assignToDistributor(dealer_id);
 
             setData((prev) => prev.filter((d) => d.dealer_id !== dealer_id));
-            setTimeout(() => {
-                location.reload();
-            }, 800);
+            fetchData();
 
             toast({
                 title: `${business_name} is now a Distributor`,
@@ -211,14 +218,38 @@ const FetchAllApprovedDealers = () => {
         {
             accessorKey: 'first_name',
             header: 'First Name',
+            id: 'first_name',
         },
         {
             accessorKey: 'last_name',
             header: 'Last Name',
+            id: 'last_name',
+        },
+        {
+            accessorKey: 'profile_pic',
+            header: 'Business Logo',
+            id: 'profile_pic',
+            cell: ({ row }) => {
+                const pfp = row.getValue('profile_pic');
+                return <img src={pfp as string} alt="Logo" className="object-contain lg:w-10 lg:h-10" />;
+            },
+        },
+        {
+            header: 'Name',
+            accessorKey: 'name', // this can be anything, not used here directly
+            cell: ({ row }) => {
+                const first = row.getValue('first_name');
+                const last = row.getValue('last_name');
+                return `${first} ${last}`;
+            },
         },
         {
             accessorKey: 'business_name',
             header: 'Business',
+        },
+        {
+            accessorKey: 'gstin',
+            header: 'GSTIN',
         },
         {
             accessorKey: 'email',
@@ -229,19 +260,11 @@ const FetchAllApprovedDealers = () => {
             header: 'Phone',
         },
         {
-            accessorKey: 'gstin',
-            header: 'GSTIN',
-        },
-        {
             accessorKey: 'shipping_address',
             header: 'Shipping Address',
             cell: ({ row }) => {
                 const addr = row.getValue('shipping_address') as Address;
-                return (
-                    <div className="max-w-[220px] truncate">
-                        {`${addr.adr}, ${addr.loc}, ${addr.dst}, ${addr.stcd} - ${addr.pncd}`}
-                    </div>
-                );
+                return <div>{`${addr.adr}, ${addr.loc}, ${addr.dst}, ${addr.stcd} - ${addr.pncd}`}</div>;
             },
         },
         {
@@ -249,11 +272,7 @@ const FetchAllApprovedDealers = () => {
             header: 'Billing Address',
             cell: ({ row }) => {
                 const addr = row.getValue('billing_address') as Address;
-                return (
-                    <div className="max-w-[220px] truncate">
-                        {`${addr.adr}, ${addr.loc}, ${addr.dst}, ${addr.stcd} - ${addr.pncd}`}
-                    </div>
-                );
+                return <div>{`${addr.adr}, ${addr.loc}, ${addr.dst}, ${addr.stcd} - ${addr.pncd}`}</div>;
             },
         },
         {
@@ -299,22 +318,15 @@ const FetchAllApprovedDealers = () => {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="rounded font-work">
                             <DropdownMenuItem asChild>
-                                <Link
-                                    to={`/customers/approved/${dealer.dealer_id}`}
+                                <h6
+                                    onClick={() =>
+                                        navigate(`/customers/dealers/view-edit/${dealer.dealer_id}`)
+                                    }
                                     className="flex items-center justify-between w-full cursor-pointer"
                                 >
-                                    View
+                                    View & Edit
                                     <Eye className="ml-2 h-4 w-4" />
-                                </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                                <Link
-                                    to={`/customers/approved/${dealer.dealer_id}`}
-                                    className="flex items-center justify-between w-full cursor-pointer"
-                                >
-                                    Edit
-                                    <Pencil className="ml-2 h-4 w-4" />
-                                </Link>
+                                </h6>
                             </DropdownMenuItem>
                             <DropdownMenuItem
                                 onClick={() => handleDisapproval(dealer.dealer_id, dealer.business_name)}
@@ -335,6 +347,13 @@ const FetchAllApprovedDealers = () => {
                             >
                                 Make Distributor
                                 <UserRoundCheck className="ml-2 h-4 w-4" />
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                onClick={() => navigate(`/customers/dealer/pfp/${dealer.dealer_id}`)}
+                                className="flex justify-between items-center cursor-pointer"
+                            >
+                                Set Business Logo
+                                <UserCircle2 className="ml-2 h-4 w-4" />
                             </DropdownMenuItem>
                             <DropdownMenuItem
                                 className="flex justify-between items-center text-red-500 cursor-pointer"
@@ -371,12 +390,56 @@ const FetchAllApprovedDealers = () => {
         <div className="space-y-4 p-6 font-work rounded">
             {/* Search and FilterSilter */}
             <div className="flex items-center justify-between">
-                <Input
-                    placeholder="Search dealers..."
-                    value={globalFilter}
-                    onChange={(e) => setGlobalFilter(e.target.value)}
-                    className="w-[250px] rounded"
-                />
+                <div className="flex justify-start items-start flex-col gap-y-4">
+                    <Input
+                        placeholder="Search dealers..."
+                        value={globalFilter}
+                        onChange={(e) => setGlobalFilter(e.target.value)}
+                        className="w-[250px] rounded"
+                    />
+                    <div className="flex justify-start items-center gap-x-6">
+                        <Button
+                            onClick={() => navigate('/customers')}
+                            size="sm"
+                            className="rounded"
+                            variant="outline"
+                        >
+                            All Customers
+                        </Button>
+                        <Button
+                            onClick={() => navigate('/customers/distributors')}
+                            size="sm"
+                            className="rounded"
+                            variant="outline"
+                        >
+                            Distributors
+                        </Button>
+                        <Button
+                            onClick={() => navigate('/customers/dealers/not-approved')}
+                            size="sm"
+                            className="rounded"
+                            variant="outline"
+                        >
+                            Disapproved Dealers
+                        </Button>
+                        <Button
+                            onClick={() => navigate('/customers/technicians')}
+                            size="sm"
+                            className="rounded"
+                            variant="outline"
+                        >
+                            Technicians
+                        </Button>
+                        <Button
+                            onClick={() => navigate('/customers/backoffices')}
+                            size="sm"
+                            className="rounded"
+                            variant="outline"
+                        >
+                            Back Offices
+                        </Button>
+                    </div>
+                </div>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button variant="outline" className="rounded flex items-center gap-2">
@@ -420,7 +483,10 @@ const FetchAllApprovedDealers = () => {
                     <TableBody>
                         {table.getRowModel().rows.length ? (
                             table.getRowModel().rows.map((row) => (
-                                <TableRow key={row.id}>
+                                <TableRow
+                                    key={row.id}
+                                    className="odd:bg-gray-100 even:bg-white dark:even:bg-stone-500/20 dark:odd:bg-stone-800"
+                                >
                                     {row.getVisibleCells().map((cell) => (
                                         <TableCell key={cell.id} className="px-4 py-2 whitespace-nowrap">
                                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -430,8 +496,14 @@ const FetchAllApprovedDealers = () => {
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={columns.length} className="text-center h-24">
-                                    No approved dealers found.
+                                <TableCell colSpan={columns.length}>
+                                    <div className="flex justify-center items-center w-full h-24">
+                                        {loading ? (
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                            <span className="text-center">No Approved Dealer Found</span>
+                                        )}
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         )}

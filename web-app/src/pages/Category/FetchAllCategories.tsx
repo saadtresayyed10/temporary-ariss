@@ -17,9 +17,9 @@ import {
     Clipboard,
     Eye,
     MoreHorizontal,
-    Pencil,
     Trash,
     Loader2,
+    PlusCircle,
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Checkbox } from '../../components/ui/checkbox';
@@ -46,9 +46,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import axios from 'axios';
 import { deleteCategory } from '../../api/categoryAPI';
 import { toast } from '../../hooks/use-toast';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
-const apiURL = 'https://ariss-app-production.up.railway.app/api';
+const apiURL = 'http://localhost:5000/api';
 
 export type Category = {
     category_id: string;
@@ -72,16 +72,28 @@ export default function FetchAllCategories() {
     const [modalOpen, setModalOpen] = useState(false);
     const [modalData, setModalData] = useState<{ name: string; id: string } | null>(null);
     const [confirmInput, setConfirmInput] = useState('');
+    const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
+
+    const fetchData = async () => {
+        setLoading(true);
+        try {
+            const categories = await fetchAllCategories();
+            setData(categories);
+        } catch (error) {
+            console.error('Failed to fetch categories:', error);
+            toast({
+                title: 'Failed to fetch categories',
+                description: 'There was an error fetching categories. Check logs or try again later...',
+                variant: 'destructive',
+                className: 'font-work border rounded shadow',
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const categories = await fetchAllCategories();
-                setData(categories);
-            } catch (error) {
-                console.error('Failed to fetch categories:', error);
-            }
-        };
         fetchData();
     }, []);
 
@@ -91,10 +103,13 @@ export default function FetchAllCategories() {
         try {
             await deleteCategory(modalData.id);
             toast({
-                description: `${modalData.name} deleted successfully`,
-                className: 'rounded font-work',
+                title: `Category deleted`,
+                description: `${modalData.name} has been successfully deleted...`,
+                variant: 'destructive',
+                className: 'rounded font-work border shadow',
             });
             setData((prev) => prev.filter((cat) => cat.category_id !== modalData.id));
+            fetchData();
         } catch (error) {
             console.error(error);
             toast({
@@ -198,12 +213,8 @@ export default function FetchAllCategories() {
                                 Copy ID <Clipboard />
                             </DropdownMenuItem>
                             <DropdownMenuItem className="flex justify-between items-center cursor-pointer">
-                                <Link to={`/categories/${category.category_id}`}>View Details</Link>
+                                <Link to={`/categories/${category.category_id}`}>View & Edit</Link>
                                 <Eye />
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="flex justify-between items-center cursor-pointer">
-                                <Link to={`/categories/${category.category_id}`}>Edit</Link>
-                                <Pencil />
                             </DropdownMenuItem>
                             <DropdownMenuItem
                                 className="flex justify-between items-center text-red-500 cursor-pointer"
@@ -246,18 +257,41 @@ export default function FetchAllCategories() {
     return (
         <div className="w-full">
             <div className="flex items-center py-4">
-                <Input
-                    placeholder="Filter categories..."
-                    value={(table.getColumn('category_name')?.getFilterValue() as string) ?? ''}
-                    onChange={(event) => table.getColumn('category_name')?.setFilterValue(event.target.value)}
-                    className="max-w-sm rounded font-work"
-                />
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="ml-auto rounded font-work">
-                            Filter <ChevronDown className="ml-2 h-4 w-4" />
+                <div className="flex justify-between items-center w-full">
+                    <div className="flex justify-start items-start flex-col gap-y-4">
+                        <Input
+                            placeholder="Search categories..."
+                            value={(table.getColumn('category_name')?.getFilterValue() as string) ?? ''}
+                            onChange={(event) =>
+                                table.getColumn('category_name')?.setFilterValue(event.target.value)
+                            }
+                            className="max-w-sm rounded font-work"
+                        />
+                        <Button
+                            onClick={() => navigate('/subcategories')}
+                            size="sm"
+                            className="rounded"
+                            variant="outline"
+                        >
+                            Subcategories
                         </Button>
-                    </DropdownMenuTrigger>
+                    </div>
+                </div>
+                <DropdownMenu>
+                    <div className="flex justify-center items-center lg:gap-x-6">
+                        <Button
+                            variant="default"
+                            className="rounded"
+                            onClick={() => navigate('/categories/add')}
+                        >
+                            Add Categories <PlusCircle className="ml-2 h-4 w-4" />
+                        </Button>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" className="rounded">
+                                Filter <ChevronDown className="ml-2 h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                    </div>
                     <DropdownMenuContent align="end" className="rounded font-work">
                         {table
                             .getAllColumns()
@@ -302,7 +336,11 @@ export default function FetchAllCategories() {
                     <TableBody>
                         {table.getRowModel().rows?.length ? (
                             table.getRowModel().rows.map((row) => (
-                                <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
+                                <TableRow
+                                    className="odd:bg-gray-100 even:bg-white dark:even:bg-stone-500/20 dark:odd:bg-stone-800"
+                                    key={row.id}
+                                    data-state={row.getIsSelected() && 'selected'}
+                                >
                                     {row.getVisibleCells().map((cell) => (
                                         <TableCell key={cell.id}>
                                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -312,8 +350,14 @@ export default function FetchAllCategories() {
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={columns.length} className="h-24 text-center font-work">
-                                    No results.
+                                <TableCell colSpan={columns.length}>
+                                    <div className="flex justify-center items-center w-full h-24">
+                                        {loading ? (
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                            <span className="text-center">No Categories Found</span>
+                                        )}
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         )}

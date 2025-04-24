@@ -9,7 +9,7 @@ import {
     useReactTable,
     VisibilityState,
 } from '@tanstack/react-table';
-import { Clipboard, Trash, Loader2, ChevronDown, MoreHorizontal } from 'lucide-react';
+import { Clipboard, Trash, Loader2, ChevronDown, MoreHorizontal, PlusCircleIcon } from 'lucide-react';
 
 import { Button } from '../../components/ui/button';
 import {
@@ -34,8 +34,9 @@ import { Label } from '../../components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
 import { toast } from '../../hooks/use-toast';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
-const apiURL = 'https://ariss-app-production.up.railway.app/api';
+const apiURL = 'http://localhost:5000/api';
 
 type Discount = {
     discount_id: string;
@@ -55,21 +56,27 @@ export default function FetchAllDiscounts() {
     const [modalData, setModalData] = useState<{ name: string; id: string } | null>(null);
     const [confirmInput, setConfirmInput] = useState('');
     const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+    const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
+
+    const load = async () => {
+        setLoading(true);
+        try {
+            const res = await axios.get(`${apiURL}/discount`);
+            setData(res.data.data);
+        } catch (error) {
+            console.error(error);
+            toast({
+                variant: 'destructive',
+                description: 'Failed to load discounts',
+                className: 'rounded font-work',
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const load = async () => {
-            try {
-                const res = await axios.get(`${apiURL}/discount`);
-                setData(res.data.data);
-            } catch (error) {
-                console.error(error);
-                toast({
-                    variant: 'destructive',
-                    description: 'Failed to load discounts',
-                    className: 'rounded font-work',
-                });
-            }
-        };
         load();
     }, []);
 
@@ -84,6 +91,7 @@ export default function FetchAllDiscounts() {
                 className: 'rounded font-work border shadow-sm',
             });
             setData((prev) => prev.filter((d) => d.discount_id !== modalData.id));
+            load();
         } catch (error) {
             console.error(error);
             toast({
@@ -122,6 +130,11 @@ export default function FetchAllDiscounts() {
             accessorKey: 'business_name',
             header: 'Business',
             cell: ({ row }) => <div className="capitalize font-work">{row.getValue('business_name')}</div>,
+        },
+        {
+            accessorKey: 'product_title',
+            header: 'Product',
+            cell: ({ row }) => <div className="capitalize font-work">{row.getValue('product_title')}</div>,
         },
         {
             accessorKey: 'assignedAt',
@@ -211,12 +224,17 @@ export default function FetchAllDiscounts() {
                 />
 
                 <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="ml-auto rounded font-work">
-                            Filter
-                            <ChevronDown className="mr-2 h-4 w-4" />
+                    <div className="flex justify-center items-center gap-x-4">
+                        <Button onClick={() => navigate('/discounts/add')} className="shadow rounded">
+                            Add Discounts <PlusCircleIcon />
                         </Button>
-                    </DropdownMenuTrigger>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" className="ml-auto rounded font-work">
+                                Filter
+                                <ChevronDown className="mr-2 h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                    </div>
                     <DropdownMenuContent align="end" className="rounded font-work">
                         {table
                             .getAllColumns()
@@ -251,7 +269,10 @@ export default function FetchAllDiscounts() {
                     <TableBody className="font-work rounded">
                         {table.getRowModel().rows.length ? (
                             table.getRowModel().rows.map((row) => (
-                                <TableRow className="font-work rounded" key={row.id}>
+                                <TableRow
+                                    className="p-4 odd:bg-gray-100 even:bg-white dark:even:bg-stone-500/20 dark:odd:bg-stone-800 transition-colors font-work rounded"
+                                    key={row.id}
+                                >
                                     {row.getVisibleCells().map((cell) => (
                                         <TableCell className="font-work rounded" key={cell.id}>
                                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -261,11 +282,14 @@ export default function FetchAllDiscounts() {
                             ))
                         ) : (
                             <TableRow className="font-work rounded">
-                                <TableCell
-                                    colSpan={columns.length}
-                                    className="h-24 text-center font-work rounded"
-                                >
-                                    No discounts found.
+                                <TableCell colSpan={columns.length}>
+                                    <div className="h-24 flex items-center justify-center">
+                                        {loading ? (
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                            <span className="text-center">No Discounts Found</span>
+                                        )}
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         )}

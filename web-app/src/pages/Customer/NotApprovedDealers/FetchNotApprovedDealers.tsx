@@ -26,17 +26,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Input } from '../../../components/ui/input';
 import { Checkbox } from '../../../components/ui/checkbox';
 import { Badge } from '../../../components/ui/badge';
-import {
-    ChevronDown,
-    Eye,
-    Trash,
-    MoreHorizontal,
-    ShieldPlus,
-    Loader2,
-    Pencil,
-    UserRoundCheck,
-} from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { ChevronDown, Eye, Trash, MoreHorizontal, ShieldPlus, Loader2, UserRoundCheck } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from '../../../hooks/use-toast';
 import {
     Dialog,
@@ -74,22 +65,37 @@ interface NotApprovedDealer {
 const FetchAllNotApprovedDealers = () => {
     const [data, setData] = useState<NotApprovedDealer[]>([]);
     const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
     const [globalFilter, setGlobalFilter] = useState('');
     const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({
         createdAt: false,
-        billing_address: false,
+        first_name: false,
+        last_name: false,
     });
 
     const [modalOpen, setModalOpen] = useState(false);
     const [confirmText, setConfirmText] = useState('');
     const [pendingDealer, setPendingDealer] = useState<{ id: string; name: string } | null>(null);
 
-    useEffect(() => {
-        const fetchData = async () => {
+    const fetchData = async () => {
+        setLoading(true);
+        try {
             const res = await getAllNotApprovedDealers();
             setData(res.data.data);
-        };
+        } catch (error) {
+            console.error(error);
+            toast({
+                title: 'Failed to fetch dealers',
+                variant: 'destructive',
+                description: 'Something went wrong while fetching not approved dealers.',
+                className: 'font-work rounded shadow border',
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
 
+    useEffect(() => {
         fetchData();
     }, []);
 
@@ -112,6 +118,7 @@ const FetchAllNotApprovedDealers = () => {
             });
             // Refresh list after deletion
             setData((prev) => prev.filter((d) => d.dealer_id !== pendingDealer.id));
+            fetchData();
         } catch (err) {
             console.error(err);
             toast({
@@ -133,7 +140,7 @@ const FetchAllNotApprovedDealers = () => {
             await approveDealer(dealer_id);
 
             setData((prev) => prev.filter((d) => d.dealer_id !== dealer_id));
-
+            fetchData();
             toast({
                 title: `${business_name} approved`,
                 description: 'Dealer has been approved successfully.',
@@ -160,9 +167,7 @@ const FetchAllNotApprovedDealers = () => {
             await assignToDistributor(dealer_id);
 
             setData((prev) => prev.filter((d) => d.dealer_id !== dealer_id));
-            setTimeout(() => {
-                location.reload();
-            }, 800);
+            fetchData();
 
             toast({
                 title: `${business_name} is now a Distributor`,
@@ -202,14 +207,38 @@ const FetchAllNotApprovedDealers = () => {
         {
             accessorKey: 'first_name',
             header: 'First Name',
+            id: 'first_name',
         },
         {
             accessorKey: 'last_name',
             header: 'Last Name',
+            id: 'last_name',
+        },
+        {
+            accessorKey: 'profile_pic',
+            header: 'Business Logo',
+            id: 'profile_pic',
+            cell: ({ row }) => {
+                const pfp = row.getValue('profile_pic');
+                return <img src={pfp as string} alt="Logo" className="object-contain lg:w-10 lg:h-10" />;
+            },
+        },
+        {
+            header: 'Name',
+            accessorKey: 'name', // this can be anything, not used here directly
+            cell: ({ row }) => {
+                const first = row.getValue('first_name');
+                const last = row.getValue('last_name');
+                return `${first} ${last}`;
+            },
         },
         {
             accessorKey: 'business_name',
             header: 'Business',
+        },
+        {
+            accessorKey: 'gstin',
+            header: 'GSTIN',
         },
         {
             accessorKey: 'email',
@@ -220,16 +249,12 @@ const FetchAllNotApprovedDealers = () => {
             header: 'Phone',
         },
         {
-            accessorKey: 'gstin',
-            header: 'GSTIN',
-        },
-        {
             accessorKey: 'shipping_address',
             header: 'Shipping Address',
             cell: ({ row }) => {
                 const address = row.getValue('shipping_address') as Address;
                 return (
-                    <div className="max-w-[220px] truncate">
+                    <div>
                         {`${address.adr}, ${address.loc}, ${address.dst}, ${address.stcd} - ${address.pncd}`}
                     </div>
                 );
@@ -242,7 +267,7 @@ const FetchAllNotApprovedDealers = () => {
             cell: ({ row }) => {
                 const address = row.getValue('billing_address') as Address;
                 return (
-                    <div className="max-w-[220px] truncate">
+                    <div>
                         {`${address.adr}, ${address.loc}, ${address.dst}, ${address.stcd} - ${address.pncd}`}
                     </div>
                 );
@@ -294,22 +319,15 @@ const FetchAllNotApprovedDealers = () => {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="rounded font-work">
                             <DropdownMenuItem asChild>
-                                <Link
-                                    to={`/customers/approved/${dealer.dealer_id}`}
+                                <h6
+                                    onClick={() =>
+                                        navigate(`/customers/dealers/view-edit/${dealer.dealer_id}`)
+                                    }
                                     className="flex items-center justify-between w-full cursor-pointer"
                                 >
-                                    View
+                                    View & Edit
                                     <Eye className="ml-2 h-4 w-4" />
-                                </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                                <Link
-                                    to={`/customers/approved/${dealer.dealer_id}`}
-                                    className="flex items-center justify-between w-full cursor-pointer"
-                                >
-                                    Edit
-                                    <Pencil className="ml-2 h-4 w-4" />
-                                </Link>
+                                </h6>
                             </DropdownMenuItem>
                             <DropdownMenuItem
                                 onClick={() => handleApproval(dealer.dealer_id, dealer.business_name)}
@@ -366,12 +384,56 @@ const FetchAllNotApprovedDealers = () => {
     return (
         <div className="space-y-4 p-6 font-work rounded">
             <div className="flex items-center justify-between">
-                <Input
-                    placeholder="Search dealers..."
-                    value={globalFilter}
-                    onChange={(e) => setGlobalFilter(e.target.value)}
-                    className="w-[250px] rounded"
-                />
+                <div className="flex justify-start items-start flex-col gap-y-4">
+                    <Input
+                        placeholder="Search dealers..."
+                        value={globalFilter}
+                        onChange={(e) => setGlobalFilter(e.target.value)}
+                        className="w-[250px] rounded"
+                    />
+                    <div className="flex justify-start items-center gap-x-6">
+                        <Button
+                            onClick={() => navigate('/customers')}
+                            size="sm"
+                            className="rounded"
+                            variant="outline"
+                        >
+                            All Customers
+                        </Button>
+                        <Button
+                            onClick={() => navigate('/customers/distributors')}
+                            size="sm"
+                            className="rounded"
+                            variant="outline"
+                        >
+                            Distributors
+                        </Button>
+                        <Button
+                            onClick={() => navigate('/customers/dealers/approved')}
+                            size="sm"
+                            className="rounded"
+                            variant="outline"
+                        >
+                            Approved Dealers
+                        </Button>
+                        <Button
+                            onClick={() => navigate('/customers/technicians')}
+                            size="sm"
+                            className="rounded"
+                            variant="outline"
+                        >
+                            Technicians
+                        </Button>
+                        <Button
+                            onClick={() => navigate('/customers/backoffices')}
+                            size="sm"
+                            className="rounded"
+                            variant="outline"
+                        >
+                            Back Offices
+                        </Button>
+                    </div>
+                </div>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button variant="outline" className="rounded flex items-center gap-2">
@@ -418,7 +480,11 @@ const FetchAllNotApprovedDealers = () => {
                     <TableBody>
                         {table.getRowModel().rows.length ? (
                             table.getRowModel().rows.map((row) => (
-                                <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
+                                <TableRow
+                                    className="odd:bg-gray-100 even:bg-white dark:even:bg-stone-500/20 dark:odd:bg-stone-800"
+                                    key={row.id}
+                                    data-state={row.getIsSelected() && 'selected'}
+                                >
                                     {row.getVisibleCells().map((cell) => (
                                         <TableCell key={cell.id} className="px-4 py-2 whitespace-nowrap">
                                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -428,8 +494,14 @@ const FetchAllNotApprovedDealers = () => {
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={columns.length} className="text-center h-24">
-                                    No disapproved dealers found.
+                                <TableCell colSpan={columns.length}>
+                                    <div className="flex justify-center items-center w-full h-24">
+                                        {loading ? (
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                            <span className="text-center">No Disapproved Dealer Found</span>
+                                        )}
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         )}

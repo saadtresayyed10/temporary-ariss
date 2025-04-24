@@ -20,7 +20,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Input } from '../../components/ui/input';
 import { Checkbox } from '../../components/ui/checkbox';
 import { Badge } from '../../components/ui/badge';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Loader2 } from 'lucide-react';
+import { toast } from '../../hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 type UserType = 'DEALER' | 'TECHNICIAN' | 'BACKOFFICE';
 
@@ -54,41 +56,58 @@ type Customer = Dealer | Technician | Backoffice;
 
 const FetchAllCustomers = () => {
     const [data, setData] = useState<Customer[]>([]);
+    const [loading, setLoading] = useState(false);
     const [globalFilter, setGlobalFilter] = useState('');
+    const navigate = useNavigate();
     const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({
-        createdAt: false, // 👈 Hides "Date" column by default
+        createdAt: false,
+        first_name: false,
+        last_name: false,
     });
 
     useEffect(() => {
         const fetchData = async () => {
-            const res: {
-                data: {
+            setLoading(true);
+            try {
+                const res: {
                     data: {
-                        dealers: Dealer[];
-                        techs: Technician[];
-                        backoffices: Backoffice[];
+                        data: {
+                            dealers: Dealer[];
+                            techs: Technician[];
+                            backoffices: Backoffice[];
+                        };
                     };
-                };
-            } = await getAllCustomers();
+                } = await getAllCustomers();
 
-            const { dealers, techs, backoffices } = res.data.data;
+                const { dealers, techs, backoffices } = res.data.data;
 
-            const flatDealers: Customer[] = dealers.map((d) => ({
-                ...d,
-                business_name: d.business_name,
-            }));
+                const flatDealers: Customer[] = dealers.map((d) => ({
+                    ...d,
+                    business_name: d.business_name,
+                }));
 
-            const flatTechs: Customer[] = techs.map((t) => ({
-                ...t,
-                business_name: t.dealer?.business_name || '',
-            }));
+                const flatTechs: Customer[] = techs.map((t) => ({
+                    ...t,
+                    business_name: t.dealer?.business_name || '',
+                }));
 
-            const flatBackoffices: Customer[] = backoffices.map((b) => ({
-                ...b,
-                business_name: b.dealer?.business_name || '',
-            }));
+                const flatBackoffices: Customer[] = backoffices.map((b) => ({
+                    ...b,
+                    business_name: b.dealer?.business_name || '',
+                }));
 
-            setData([...flatDealers, ...flatTechs, ...flatBackoffices]);
+                setData([...flatDealers, ...flatTechs, ...flatBackoffices]);
+            } catch (error) {
+                console.error(error);
+                toast({
+                    variant: 'destructive',
+                    title: 'Error fetching customers',
+                    description: 'There was an error fetching customers. Please try again later...',
+                    className: 'font-work border rounded shadow',
+                });
+            } finally {
+                setLoading(false);
+            }
         };
 
         fetchData();
@@ -117,10 +136,25 @@ const FetchAllCustomers = () => {
         {
             accessorKey: 'first_name',
             header: 'First Name',
+            id: 'first_name',
         },
         {
             accessorKey: 'last_name',
             header: 'Last Name',
+            id: 'last_name',
+        },
+        {
+            header: 'Name',
+            accessorKey: 'name', // this can be anything, not used here directly
+            cell: ({ row }) => {
+                const first = row.getValue('first_name');
+                const last = row.getValue('last_name');
+                return `${first} ${last}`;
+            },
+        },
+        {
+            accessorKey: 'business_name',
+            header: 'Business Name',
         },
         {
             accessorKey: 'usertype',
@@ -133,10 +167,6 @@ const FetchAllCustomers = () => {
         {
             accessorKey: 'phone',
             header: 'Phone',
-        },
-        {
-            accessorKey: 'business_name',
-            header: 'Business Name',
         },
         {
             accessorKey: 'isApproved',
@@ -177,12 +207,56 @@ const FetchAllCustomers = () => {
     return (
         <div className="space-y-4 p-6 font-work rounded">
             <div className="flex items-center justify-between">
-                <Input
-                    placeholder="Search customers..."
-                    value={globalFilter}
-                    onChange={(e) => setGlobalFilter(e.target.value)}
-                    className="w-[250px] rounded"
-                />
+                <div className="flex justify-start items-start flex-col gap-y-4">
+                    <Input
+                        placeholder="Search customers..."
+                        value={globalFilter}
+                        onChange={(e) => setGlobalFilter(e.target.value)}
+                        className="w-[250px] rounded"
+                    />
+                    <div className="flex justify-start items-center gap-x-6">
+                        <Button
+                            onClick={() => navigate('/customers/distributors')}
+                            size="sm"
+                            className="rounded"
+                            variant="outline"
+                        >
+                            Distributors
+                        </Button>
+                        <Button
+                            onClick={() => navigate('/customers/dealers/approved')}
+                            size="sm"
+                            className="rounded"
+                            variant="outline"
+                        >
+                            Approved Dealers
+                        </Button>
+                        <Button
+                            onClick={() => navigate('/customers/dealers/not-approved')}
+                            size="sm"
+                            className="rounded"
+                            variant="outline"
+                        >
+                            Disapproved Dealers
+                        </Button>
+                        <Button
+                            onClick={() => navigate('/customers/technicians')}
+                            size="sm"
+                            className="rounded"
+                            variant="outline"
+                        >
+                            Technicians
+                        </Button>
+                        <Button
+                            onClick={() => navigate('/customers/backoffices')}
+                            size="sm"
+                            className="rounded"
+                            variant="outline"
+                        >
+                            Back Offices
+                        </Button>
+                    </div>
+                </div>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button variant="outline" className="rounded flex items-center gap-2">
@@ -229,7 +303,11 @@ const FetchAllCustomers = () => {
                     <TableBody>
                         {table.getRowModel().rows.length ? (
                             table.getRowModel().rows.map((row) => (
-                                <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
+                                <TableRow
+                                    key={row.id}
+                                    className="odd:bg-gray-100 even:bg-white dark:even:bg-stone-500/20 dark:odd:bg-stone-800"
+                                    data-state={row.getIsSelected() && 'selected'}
+                                >
                                     {row.getVisibleCells().map((cell) => (
                                         <TableCell key={cell.id} className="px-4 py-2 whitespace-nowrap">
                                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -239,8 +317,14 @@ const FetchAllCustomers = () => {
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={columns.length} className="text-center h-24">
-                                    No customers found.
+                                <TableCell colSpan={columns.length}>
+                                    <div className="flex justify-center items-center w-full h-24">
+                                        {loading ? (
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                            <span className="text-center">No Customers Found</span>
+                                        )}
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         )}
