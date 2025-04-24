@@ -106,3 +106,8 @@ export const assignToDistributor = async (dealer_id: string) => {
 export const assignDistributorToDealer = async (dealer_id: string) => {
     return await axios.put(`${apiURL}/customer/distributor-dealer/${dealer_id}`);
 };
+
+// Update dealer's Profile Picture
+export const updatePfp = async (dealer_id: string, profile_pic: string) => {
+    return await axios.put(`${apiURL}/customer/dealers/edit/${dealer_id}`, { profile_pic });
+};

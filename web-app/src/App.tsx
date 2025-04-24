@@ -22,6 +22,7 @@ import Discounts from './pages/Discount/Index';
 import RMA from './pages/RMA/Index';
 import FetchSingleRMA from './pages/RMA/FetchSingleRMA';
 import SingleDealer from './pages/Customer/FetchSingleDealer';
+import ProfilePic from './_components/ProfilePic';
 
 function App() {
     return (
@@ -47,6 +48,7 @@ function App() {
                         <Route path="customers/dealers/approved" element={<ApprovedDealers />} />
                         <Route path="customers/dealers/not-approved" element={<NotApprovedDealers />} />
                         <Route path="customers/dealers/view-edit/:dealer_id" element={<SingleDealer />} />
+                        <Route path="customers/dealer/pfp/:dealer_id" element={<ProfilePic />} />
 
                         <Route path="customers/technicians" element={<Technicians />} />
 
