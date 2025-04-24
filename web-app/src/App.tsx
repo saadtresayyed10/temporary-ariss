@@ -24,6 +24,9 @@ import FetchSingleRMA from './pages/RMA/FetchSingleRMA';
 import SingleDealer from './pages/Customer/FetchSingleDealer';
 import ProfilePic from './_components/ProfilePic';
 import FetchSingleProduct from './pages/Product/FetchSingleProduct';
+import Courses from './pages/Courses/Index';
+import AddCourse from './pages/Courses/AddCouse';
+import FetchSingleCourse from './pages/Courses/FetchSingleCourse';
 
 function App() {
     return (
@@ -63,6 +66,10 @@ function App() {
 
                         <Route path="rma" element={<RMA />} />
                         <Route path="rma/:rma_id" element={<FetchSingleRMA />} />
+
+                        <Route path="courses" element={<Courses />} />
+                        <Route path="courses/add" element={<AddCourse />} />
+                        <Route path="courses/:course_id" element={<FetchSingleCourse />} />
                     </Route>
                 </Routes>
                 <Toaster />

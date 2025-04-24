@@ -101,3 +101,41 @@ export const publishCourseService = async (course_id: string) => {
         },
     });
 };
+
+// Mark a course as unpublished
+export const unpublishCourseService = async (course_id: string) => {
+    // Make sure the course exists before publishing
+    const existingCourse = await prisma.course.findUnique({
+        where: {
+            course_id,
+        },
+    });
+
+    if (!existingCourse) {
+        throw new Error('Course does not exists');
+    }
+
+    // Set isPublished to false
+    return await prisma.course.update({
+        where: {
+            course_id,
+        },
+        data: {
+            isPublished: false,
+        },
+    });
+};
+
+// Get all Courses
+export const fetchAllCoursesService = async () => {
+    return await prisma.course.findMany();
+};
+
+// Get single Course
+export const fetchCourseService = async (course_id: string) => {
+    return await prisma.course.findMany({
+        where: {
+            course_id,
+        },
+    });
+};

@@ -15,6 +15,15 @@ courseRoutes.put('/admin/courses/:course_id', courseController.updateCourseContr
 courseRoutes.delete('/admin/courses/:course_id', courseController.deleteCourseController);
 
 // Route to publish a course (sets isPublished to true)
-courseRoutes.patch('/admin/courses/:course_id/publish', courseController.publishCourseController);
+courseRoutes.put('/admin/courses/:course_id/publish', courseController.publishCourseController);
+
+// Route to publish a course (sets isPublished to false)
+courseRoutes.put('/admin/courses/:course_id/unpublish', courseController.unpublishCourseController);
+
+// Route to fetch all course
+courseRoutes.get('/admin/courses', courseController.getAllCoursesController);
+
+// Route to fetch a single course
+courseRoutes.get('/admin/courses/:course_id', courseController.getCourseController);
 
 export default courseRoutes;

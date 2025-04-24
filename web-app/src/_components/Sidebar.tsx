@@ -2,6 +2,7 @@
 import clsx from 'clsx';
 import {
     ArrowLeftRight,
+    BookCheck,
     Heart,
     Landmark,
     LayoutDashboard,
@@ -12,7 +13,6 @@ import {
     Users,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import SidebarCourse from './Sidebar/Course';
 
 interface SidebarProps {
     isOpen: boolean;
@@ -72,9 +72,6 @@ const Sidebar = ({ isOpen }: SidebarProps) => {
                     <span />
                 </Link>
             </button>
-            {/* <button className="w-full">
-                <SidebarRMA />
-            </button> */}
             <button className="bg-transparent text-stone-800 dark:text-stone-100 hover:bg-transparent w-full shadow-none flex justify-between items-center lg:px-1.5 lg:py-2 text-base font-normal">
                 <Link to="/rma">
                     <span className="flex items-center gap-x-2 text-lg font-work">
@@ -111,8 +108,14 @@ const Sidebar = ({ isOpen }: SidebarProps) => {
                     <span />
                 </Link>
             </button>
-            <button className="w-full">
-                <SidebarCourse />
+            <button className="bg-transparent text-stone-800 dark:text-stone-100 hover:bg-transparent w-full shadow-none flex justify-between items-center lg:px-1.5 lg:py-2 text-base font-normal">
+                <Link to="/courses">
+                    <span className="flex items-center gap-x-2 text-lg font-work">
+                        <BookCheck size={20} className="min-w-[20px] min-h-[20px] stroke-[1.5] mr-2" />
+                        Courses
+                    </span>
+                    <span />
+                </Link>
             </button>
         </aside>
     );
