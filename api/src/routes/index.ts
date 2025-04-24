@@ -14,10 +14,13 @@ import userRoutes from './user.routes.js';
 import wishlistRoutes from './wishlist.routes.js';
 import rmaRoutes from './rma.routes.js';
 import courseRoutes from './course.routes.js';
+import adminRoutes from './admin.routes.js';
+import empRoutes from './employee.routes.js';
 
 const router = Router();
 
 // Define routes
+router.use('/admin', adminRoutes);
 router.use('/dealer', dealerRoutes);
 router.use('/technician', technicianRoutes);
 router.use('/back-office', backOfficeRoutes);
@@ -32,5 +35,6 @@ router.use('/users', userRoutes);
 router.use('/wishlist', wishlistRoutes);
 router.use('/rma', rmaRoutes);
 router.use('/course', courseRoutes);
+router.use('/employee', empRoutes);
 
 export default router;

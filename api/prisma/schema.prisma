@@ -240,6 +240,36 @@ model CourseAnswer {
   @@unique([enrollment_id, question_id])
 }
 
+model Admin {
+  admin_id    String       @id @default(uuid())
+  fullname    String
+  email       String       @unique
+  phone       String       @unique
+  password    String
+  profile_pic String       @default("https://static.thenounproject.com/png/5034901-200.png")
+  usertype    EmployeeType @default(ADMIN)
+
+  createdAt DateTime @default(now())
+}
+
+model Employee {
+  emp_id      String       @id @default(uuid())
+  fullname    String
+  email       String       @unique
+  phone       String
+  password    String
+  profile_pic String       @default("https://static.thenounproject.com/png/5034901-200.png")
+  isApproved  Boolean      @default(false)
+  usertype    EmployeeType @default(EMPLOYEE)
+
+  createdAt DateTime @default(now())
+}
+
+enum EmployeeType {
+  ADMIN
+  EMPLOYEE
+}
+
 enum UserType {
   DEALER
   TECHNICIAN

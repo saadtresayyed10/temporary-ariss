@@ -1,4 +1,7 @@
 -- CreateEnum
+CREATE TYPE "EmployeeType" AS ENUM ('ADMIN', 'EMPLOYEE');
+
+-- CreateEnum
 CREATE TYPE "UserType" AS ENUM ('DEALER', 'TECHNICIAN', 'BACKOFFICE');
 
 -- CreateEnum
@@ -246,6 +249,35 @@ CREATE TABLE "CourseAnswer" (
     CONSTRAINT "CourseAnswer_pkey" PRIMARY KEY ("answer_id")
 );
 
+-- CreateTable
+CREATE TABLE "Admin" (
+    "admin_id" TEXT NOT NULL,
+    "fullname" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "phone" TEXT NOT NULL,
+    "password" TEXT NOT NULL,
+    "profile_pic" TEXT NOT NULL DEFAULT 'https://static.thenounproject.com/png/5034901-200.png',
+    "usertype" "EmployeeType" NOT NULL DEFAULT 'ADMIN',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "Admin_pkey" PRIMARY KEY ("admin_id")
+);
+
+-- CreateTable
+CREATE TABLE "Employee" (
+    "emp_id" TEXT NOT NULL,
+    "fullname" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "phone" TEXT NOT NULL,
+    "password" TEXT NOT NULL,
+    "profile_pic" TEXT NOT NULL DEFAULT 'https://static.thenounproject.com/png/5034901-200.png',
+    "isApproved" BOOLEAN NOT NULL DEFAULT false,
+    "usertype" "EmployeeType" NOT NULL DEFAULT 'EMPLOYEE',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "Employee_pkey" PRIMARY KEY ("emp_id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "Dealers_phone_key" ON "Dealers"("phone");
 
@@ -293,6 +325,15 @@ CREATE UNIQUE INDEX "CourseEnrollment_course_id_user_id_key" ON "CourseEnrollmen
 
 -- CreateIndex
 CREATE UNIQUE INDEX "CourseAnswer_enrollment_id_question_id_key" ON "CourseAnswer"("enrollment_id", "question_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Admin_email_key" ON "Admin"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Admin_phone_key" ON "Admin"("phone");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Employee_email_key" ON "Employee"("email");
 
 -- AddForeignKey
 ALTER TABLE "Technicians" ADD CONSTRAINT "Technicians_dealerid_fkey" FOREIGN KEY ("dealerid") REFERENCES "Dealers"("dealer_id") ON DELETE CASCADE ON UPDATE CASCADE;
