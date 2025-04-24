@@ -16,6 +16,7 @@ import {
 } from '../components/ui/dropdown-menu';
 import { useNavigate } from 'react-router-dom';
 import { adminLogout } from '../api/authURL';
+import { toast } from '../hooks/use-toast';
 
 export default function AdminAccount() {
     const logoutAdmin = useAdminAuthStore((state) => state.logoutAdmin);
@@ -23,7 +24,12 @@ export default function AdminAccount() {
 
     const handleLogout = async () => {
         try {
-            await adminLogout(); // this will hit your backend and clear the cookie
+            await adminLogout(); // this will hit your backend and clear the
+            toast({
+                title: 'Logout Successful',
+                description: 'See you later Mujahid Patel',
+                className: 'font-work shadow bg-green-500 rounded text-stone-100',
+            });
         } catch (err) {
             console.error('Logout API failed:', err);
         } finally {
@@ -84,7 +90,7 @@ export default function AdminAccount() {
                 <DropdownMenuItem className="cursor-pointer">Support</DropdownMenuItem>
                 <DropdownMenuItem disabled>API</DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-500">
                     Log out
                     <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
                 </DropdownMenuItem>

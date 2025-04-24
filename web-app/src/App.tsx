@@ -29,6 +29,7 @@ import AddCourse from './pages/Courses/AddCouse';
 import FetchSingleCourse from './pages/Courses/FetchSingleCourse';
 import ProtectRoutes from './middleware/ProtectRoutes';
 import Login from './pages/Admin/Login';
+import Wishlists from './pages/Wishlist/Index';
 
 function App() {
     return (
@@ -79,6 +80,8 @@ function App() {
                         <Route path="courses" element={<Courses />} />
                         <Route path="courses/add" element={<AddCourse />} />
                         <Route path="courses/:course_id" element={<FetchSingleCourse />} />
+
+                        <Route path="wishlists" element={<Wishlists />} />
                     </Route>
 
                     <Route path="/login" element={<Login />}>

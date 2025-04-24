@@ -14,6 +14,7 @@ import { useNavigate } from 'react-router-dom';
 import { adminLogin } from '../../api/authURL';
 import { useAdminAuthStore } from '../../store/useAdminAuthStore';
 import { Loader2 } from 'lucide-react';
+import { toast } from '../../hooks/use-toast';
 
 export default function Login() {
     const [email, setEmail] = useState('');
@@ -30,6 +31,11 @@ export default function Login() {
         try {
             await adminLogin(email, password);
             await fetchAdmin();
+            toast({
+                title: 'Login Successful',
+                description: 'Hello Mujahid Patel, welcome to your dashboard',
+                className: 'font-work border shadow bg-green-500 rounded text-stone-800',
+            });
             navigate('/');
         } catch (err) {
             setError('Invalid email or password');
@@ -40,17 +46,17 @@ export default function Login() {
     };
 
     return (
-        <div className="flex justify-center items-center w-full min-h-screen bg-white text-stone-800 font-work lg:p-10">
+        <div className="flex justify-center items-center w-full min-h-screen bg-white text-stone-800 font-work lg:p-4">
             <Card className="w-[380px]">
                 <CardHeader>
-                    <CardTitle className="font-posterama lg:text-4xl uppercase font-extralight">
-                        Ariss
+                    <CardTitle className="flex justify-center items-center">
+                        <img src="/Ariss_Logo.png" alt="Logo" className="lg:max-w-32" />
                     </CardTitle>
                     <CardDescription>Welcome back, login to access admin panel</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleLogin}>
-                        <div className="grid w-full items-center gap-4">
+                        <div className="grid w-full items-center gap-8">
                             <div className="flex flex-col space-y-2">
                                 <Label htmlFor="email">Email</Label>
                                 <Input

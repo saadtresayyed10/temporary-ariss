@@ -56,3 +56,8 @@ export const deleteWishlistService = async (wishlist_id: string) => {
         },
     });
 };
+
+// Service to fetch all wishlists
+export const fetchAllWishlistsService = async () => {
+    return await prisma.wishlist.findMany();
+};

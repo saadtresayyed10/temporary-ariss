@@ -3,6 +3,7 @@
 import {
     addToWishlistService,
     deleteWishlistService,
+    fetchAllWishlistsService,
     getWishlistProductService,
 } from '../services/wishlist.service.js';
 import { Request, Response } from 'express';
@@ -53,6 +54,17 @@ export const deleteWishlistController = async (req: Request, res: Response) => {
         const wishlist = await deleteWishlistService(wishlist_id);
 
         return res.status(200).json({ success: true, data: `${wishlist.wishlist_id} deleted` });
+    } catch (error: any) {
+        return res.status(400).json({ success: false, message: error.message });
+    }
+};
+
+// Controller to fetch all wishlists
+export const fetchAllWishlistsController = async (_req: Request, res: Response) => {
+    try {
+        const wishlists = await fetchAllWishlistsService();
+        return res.status(200).json({ success: true, total: wishlists.length, data: wishlists });
+        return;
     } catch (error: any) {
         return res.status(400).json({ success: false, message: error.message });
     }

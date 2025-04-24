@@ -3,7 +3,6 @@ import clsx from 'clsx';
 import {
     ArrowLeftRight,
     BookCheck,
-    Heart,
     Landmark,
     LayoutDashboard,
     Network,
@@ -99,7 +98,7 @@ const Sidebar = ({ isOpen }: SidebarProps) => {
                     <span />
                 </Link>
             </button>
-            <button className="bg-transparent text-stone-100 dark:text-stone-100 hover:bg-transparent w-full shadow-none flex justify-between items-center lg:px-1.5 lg:py-2 text-base font-normal">
+            {/* <button className="bg-transparent text-stone-100 dark:text-stone-100 hover:bg-transparent w-full shadow-none flex justify-between items-center lg:px-1.5 lg:py-2 text-base font-normal">
                 <Link to="/wishlists">
                     <span className="flex items-center gap-x-2 text-lg font-work">
                         <Heart size={20} className="min-w-[20px] min-h-[20px] stroke-[1.5] mr-2" />
@@ -107,7 +106,7 @@ const Sidebar = ({ isOpen }: SidebarProps) => {
                     </span>
                     <span />
                 </Link>
-            </button>
+            </button> */}
             <button className="bg-transparent text-stone-100 dark:text-stone-100 hover:bg-transparent w-full shadow-none flex justify-between items-center lg:px-1.5 lg:py-2 text-base font-normal">
                 <Link to="/courses">
                     <span className="flex items-center gap-x-2 text-lg font-work">
